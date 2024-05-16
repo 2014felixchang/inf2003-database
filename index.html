@@ -67,9 +67,9 @@
                 html += `
                 <tr>
                     <td></td>
-                    <td contenteditable id="first_name_data"></td>
-                    <td contenteditable id="last_name_data"></td>
-                    <td contenteditable id="age_data"></td>
+                    <td contenteditable id="first_name_data">Enter Here</td>
+                    <td contenteditable id="last_name_data">Enter XXXX</td>
+                    <td contenteditable id="age_data">XX</td>
                     <td><button type="button" class="btn btn-success btn-sm" onclick="add_data()">Add</button></td>
                 </tr>
                 `;
@@ -93,9 +93,11 @@
 
         const request = new XMLHttpRequest();
 
-        request.open(`POST`, `/add_data`, true);
+        request.open('POST', '/add_data', true);
 
         request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        
+        request.send(param);
 
         request.onreadystatechange = () => {
 
@@ -108,7 +110,6 @@
 
         };
 
-        request.send(param);
     }
 
     function update_data(element, variable_name, id)
@@ -121,7 +122,8 @@
 
         //Send the proper header information along with the request
         request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-
+        
+        request.send(param);
         request.onreadystatechange = () => {
 
             if(request.readyState === XMLHttpRequest.DONE && request.status === 200)
@@ -133,7 +135,6 @@
 
         };
 
-        request.send(param);
     }
 
     function delete_data(id)

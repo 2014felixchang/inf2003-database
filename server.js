@@ -17,6 +17,7 @@ app.use(bodyParser.urlencoded({ extended : false }));
 app.use(bodyParser.json());
 
 //Make MySQL Database Connection
+//Change the 'database' value to the one with the data
 var pool  = mysql.createPool({
   connectionLimit : 10,
   host : 'inf2003db-felixchang-67bf.g.aivencloud.com',
@@ -56,13 +57,9 @@ app.post("/add_data", (request, response) => {
 
 	const age = request.body.age;
 
-	const sql = `
-	INSERT INTO sample_data 
-	(first_name, last_name, age) 
-	VALUES ("${first_name}", "${last_name}", "${age}")
-	`;
-
-	pool.query(sql, (error, results) => {
+	const sql = 'INSERT INTO sample_data (first_name, last_name, age) VALUES (?, ?, ?)';
+    
+	pool.query(sql, [first_name, last_name, age], (error, results) => {
 		response.json({
 			message : 'Data Added'
 		});
@@ -80,9 +77,9 @@ app.post('/update_data', (request, response) => {
 	const id = request.body.id;
 
 	const sql = `UPDATE sample_data SET `+variable_name+`= "${variable_value}" WHERE id = "${id}"`;
+    console.log(sql);
 
 	pool.query(sql, (error, results) => {
-
 		response.json({
 			message : 'Data Updated'
 		});
