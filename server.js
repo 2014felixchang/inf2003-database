@@ -24,7 +24,7 @@ var pool  = mysql.createPool({
   port : '26780',
   user : 'web',
   password : 'web',
-  database : 'test'
+  database : 'defaultdb'
 });
 
 //Check MySQL Database Connection
@@ -38,8 +38,8 @@ app.get("/", (request, response) => {
 });
 
 //Crate Route handle get request
-app.get("/get_data", (request, response) => {
-	const sql = 'SELECT * FROM sample_data ORDER BY id ASC';
+app.get("/get_games", (request, response) => {
+	const sql = "SELECT * FROM games_table WHERE name LIKE '%" + request.query.search + "%'";
 
 	pool.query(sql, (error, results) => {
 		console.log(error);
@@ -49,59 +49,59 @@ app.get("/get_data", (request, response) => {
 });
 
 //Create Route for Insert Data Operation
-app.post("/add_data", (request, response) => {
+// app.post("/add_data", (request, response) => {
 
-	const first_name = request.body.first_name;
+// 	const first_name = request.body.first_name;
 
-	const last_name = request.body.last_name;
+// 	const last_name = request.body.last_name;
 
-	const age = request.body.age;
+// 	const age = request.body.age;
 
-	const sql = 'INSERT INTO sample_data (first_name, last_name, age) VALUES (?, ?, ?)';
+// 	const sql = 'INSERT INTO sample_data (first_name, last_name, age) VALUES (?, ?, ?)';
     
-	pool.query(sql, [first_name, last_name, age], (error, results) => {
-		response.json({
-			message : 'Data Added'
-		});
-	});
+// 	pool.query(sql, [first_name, last_name, age], (error, results) => {
+// 		response.json({
+// 			message : 'Data Added'
+// 		});
+// 	});
 
-});
+// });
 
 //Create Route for Update Data Operation
-app.post('/update_data', (request, response) => {
+// app.post('/update_data', (request, response) => {
 
-	const variable_name = request.body.variable_name;
+// 	const variable_name = request.body.variable_name;
 
-	const variable_value = request.body.variable_value;
+// 	const variable_value = request.body.variable_value;
 
-	const id = request.body.id;
+// 	const id = request.body.id;
 
-	const sql = `UPDATE sample_data SET `+variable_name+`= "${variable_value}" WHERE id = "${id}"`;
-    console.log(sql);
+// 	const sql = `UPDATE sample_data SET `+variable_name+`= "${variable_value}" WHERE id = "${id}"`;
+//     console.log(sql);
 
-	pool.query(sql, (error, results) => {
-		response.json({
-			message : 'Data Updated'
-		});
+// 	pool.query(sql, (error, results) => {
+// 		response.json({
+// 			message : 'Data Updated'
+// 		});
 
-	});
+// 	});
 
-});
+// });
 
 //Create Route for Delete data operation
-app.post("/delete_data", (request, response) => {
+// app.post("/delete_data", (request, response) => {
 
-	const id = request.body.id;
+// 	const id = request.body.id;
 
-	const sql = `DELETE FROM sample_data WHERE id = '${id}'`;
+// 	const sql = `DELETE FROM sample_data WHERE id = '${id}'`;
 
-	pool.query(sql, (error, results) => {
-		response.json({
-			message : 'Data Deleted'
-		});
-	});
+// 	pool.query(sql, (error, results) => {
+// 		response.json({
+// 			message : 'Data Deleted'
+// 		});
+// 	});
 
-});
+// });
 
 app.listen(8080, () => {
 	console.log('Server listening on port 8080');

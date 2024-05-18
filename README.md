@@ -17,3 +17,8 @@ To run the web app:
 2) Navigate to the folder containing the js and html file
 3) Run: node server.js
 4) Open your browser of choice and go to 'localhost:8080'
+
+NEED TO DO:
+- Currently only R in CRUD: (Only retrieve games based on search bar)
+- Add a page where when user click on the game then game info? then user can add review there or smth
+- more
