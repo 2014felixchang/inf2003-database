@@ -86,7 +86,6 @@ app.get("/game_info", (request, response) => {
     response.sendFile(__dirname + "/game_info.html");
 });
 
-
 // Serve index page
 app.get("/index", (request, response) => {
     if (request.session.loggedin) {
@@ -169,7 +168,7 @@ app.get("/open_game", (request, response) => {
 // Route to retrieve reviews for a game
 app.get("/get_reviews", (request, response) => {
     const gameId = request.query.gameid;
-    const sql = "SELECT r.rating, r.comment, r.date, u.username FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.game_id = ?";
+    const sql = "SELECT r.rating, r.comment, DATE_FORMAT(r.date, '%Y-%m-%d') as date, u.username FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.game_id = ?";
     pool.query(sql, [gameId], (error, results) => {
         if (error) throw error;
         response.send(results);
@@ -180,7 +179,12 @@ app.get("/get_reviews", (request, response) => {
 app.post("/add_review", (request, response) => {
     const { game_id, rating, comment } = request.body;
     const user_id = request.session.user_id; // assuming user_id is stored in session after login
-    const date = new Date().toISOString().slice(0, 10); // get current date in YYYY-MM-DD format
+
+    // Convert current time to Singapore time
+    const currentUTC = new Date();
+    const singaporeOffset = 8 * 60; // Singapore is UTC+8
+    const singaporeTime = new Date(currentUTC.getTime() + (singaporeOffset * 60 * 1000));
+    const date = singaporeTime.toISOString().split('T')[0]; // get current date in YYYY-MM-DD format
 
     const sql = "INSERT INTO reviews (user_id, game_id, rating, comment, date) VALUES (?, ?, ?, ?, ?)";
     pool.query(sql, [user_id, game_id, rating, comment, date], (error, results) => {
