@@ -5,6 +5,8 @@ Dependencies/Libraries needed:
 - express
 - mysql
 - body-parser
+- express-session
+- bcrypt
 
 1) Open Terminal/Command Prompt
 2) Navigate to the folder containing the js and html file.

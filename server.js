@@ -49,7 +49,7 @@ pool.getConnection((error) => {
 // Redirect to register page on first launch
 app.get("/", (request, response) => {
     if (request.session.loggedin) {
-        response.redirect("/index");
+        response.redirect("/index2");
     } else {
         response.redirect("/register");
     }
@@ -68,7 +68,7 @@ app.get("/login", (request, response) => {
 // Serve index page
 app.get("/index", (request, response) => {
     if (request.session.loggedin) {
-        response.sendFile(__dirname + "/index.html");
+        response.sendFile(__dirname + "/index2.html");
     } else {
         response.redirect("/login");
     }
@@ -121,11 +121,11 @@ app.post('/login', (req, res) => {
 });
 
 //Crate Route handle get request
-app.get("/get_data", (request, response) => {
-	const sql = 'SELECT * FROM games ORDER BY game_id ASC';
+app.get("/get_games", (request, response) => {
+	const sql = "SELECT * FROM games WHERE name LIKE '%" + request.query.search + "%'";
 
 	pool.query(sql, (error, results) => {
-		console.log(error);
+		console.log(results);
 		response.send(results);
 
 	});
