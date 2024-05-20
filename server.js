@@ -80,6 +80,11 @@ app.get("/admindash", (request, response) => {
     response.sendFile(__dirname + "/admindash.html");
 });
 
+// Serve as game info page
+app.get("/game_info", (request, response) => {
+    response.sendFile(__dirname + "/game_info.html");
+});
+
 
 // Serve index page
 app.get("/index", (request, response) => {
@@ -139,6 +144,20 @@ app.post('/login', (req, res) => {
 //Crate Route handle get request
 app.get("/get_games", (request, response) => {
 	const sql = "SELECT * FROM games WHERE name LIKE '%" + request.query.search + "%'";
+
+	pool.query(sql, (error, results) => {
+		console.log("Error: " + error);
+		response.send(results);
+
+	});
+});
+
+app.get("/open_game", (request, response) => {
+    const sql = `SELECT g.game_id, g.name, g.year, g.platform, p.publisher_name as publisher, g2.genre_name as genre
+        FROM games g, publishers p, genres g2
+        WHERE g.publisher_id = p.publisher_id
+        AND g.genre_id = g2.genre_id
+        AND g.game_id = ` + request.query.id;
 
 	pool.query(sql, (error, results) => {
 		console.log("Error: " + error);
