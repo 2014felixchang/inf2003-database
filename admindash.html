@@ -36,9 +36,10 @@
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title">User Management</h5>
-                        <p class="card-text">Manage users, view details, and update information.</p>
-                        <a href="#" class="btn btn-primary">Go to Users</a>
+                        <h5 class="card-title">Game Management</h5>
+                        <p class="card-text">Manage game details</p>
+                        <a href="/gameadd" class="btn btn-primary">Add Game</a>
+                        <a href="/gamedelete" class="btn btn-danger">Delete Game</a>
                     </div>
                 </div>
             </div>
@@ -46,14 +47,43 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Settings</h5>
-                        <p class="card-text">Configure system settings and preferences.</p>
-                        <a href="#" class="btn btn-primary">Go to Settings</a>
+                        <p class="card-text">Delete reviews by providing the username and game ID.</p>
+                        <form id="deleteReviewForm">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username:</label>
+                                <input type="text" class="form-control" id="username" name="username" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="gameId" class="form-label">Game ID:</label>
+                                <input type="number" class="form-control" id="gameId" name="gameId" required>
+                            </div>
+                            <button type="button" class="btn btn-danger" onclick="deleteReview()">Delete Review</button>
+                        </form>
                     </div>
                 </div>
-            </div>
         </div>
     </div>
 
     <script src="https://getbootstrap.com/docs/5.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-QN6eu6jo1i8v9SAz3k4XYLOLznAm12aLp1DqPiIF/DJyMMpdw1VQ6DkUtJ8lP2q+H" crossorigin="anonymous"></script>
+    <script>
+        function deleteReview() {
+            const gameId = parseInt(document.getElementById('gameId').value);
+            const username = document.getElementById('username').value;
+
+            fetch(`/delete_review/${gameId}/${username}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
 </body>
 </html>
