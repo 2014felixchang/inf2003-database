@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Choose Login Type</title>
+    <link href="https://getbootstrap.com/docs/5.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+</head>
+<body>
+    <nav class="navbar navbar-light bg-light">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="#">Gamepedia</a>
+        </div>
+      </nav>
+    <div class="container mt-5 mb-5">
+        <h1 class="text-danger text-center"><b>Choose Login Type</b></h1>
+        <div class="card mt-3 mb-3">
+            <div class="card-header">Login Options</div>
+            <div class="card-body text-center">
+                <button id="userLoginBtn" class="btn btn-primary m-3">Login as User</button>
+                <button id="adminLoginBtn" class="btn btn-danger m-3">Login as Administrator</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('userLoginBtn').addEventListener('click', function() {
+            window.location.href = '/login';
+        });
+
+        document.getElementById('adminLoginBtn').addEventListener('click', function() {
+            window.location.href = '/admin';
+        });
+    </script>
+</body>
+</html>
