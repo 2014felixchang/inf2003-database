@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Game Details</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 8px;
+            margin: 6px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Add Game Details</h2>
+        <form id="gameForm">
+            <label for="name">Game Name:</label>
+            <input type="text" id="name" name="name" required>
+
+            <label for="year">Year:</label>
+            <input type="number" id="year" name="year" required>
+
+            <label for="platform">Platform:</label>
+            <select id="platform" name="platform" required>
+                <option value="">Select Platform</option>
+            </select>
+
+            <label for="publisher">Publisher:</label>
+            <select id="publisher" name="publisher" required>
+                <option value="">Select Publisher</option>
+            </select>
+
+            <label for="genre">Genre:</label>
+            <select id="genre" name="genre" required>
+                <option value="">Select Genre</option>
+            </select>
+
+            <label for="na_sales">NA Sales:</label>
+            <input type="number" id="na_sales" name="na_sales" step="0.01" required>
+
+            <label for="eu_sales">EU Sales:</label>
+            <input type="number" id="eu_sales" name="eu_sales" step="0.01" required>
+
+            <label for="jp_sales">JP Sales:</label>
+            <input type="number" id="jp_sales" name="jp_sales" step="0.01" required>
+
+            <label for="other_sales">Other Sales:</label>
+            <input type="number" id="other_sales" name="other_sales" step="0.01" required>
+
+            <button type="button" onclick="addGame()">Save</button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+    // Fetch platforms from the server and populate the platform dropdown
+    fetch("/get_platforms")
+        .then(response => response.json())
+        .then(data => {
+            const platformDropdown = document.getElementById("platform");
+            data.forEach(platform => {
+                const option = document.createElement("option");
+                option.value = platform;
+                option.textContent = platform;
+                platformDropdown.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching platforms:', error);
+        });
+
+       
+
+            // Fetch publishers from the server and populate the publisher dropdown
+            fetch("/get_publishers")
+                .then(response => response.json())
+                .then(data => {
+                    const publisherDropdown = document.getElementById("publisher");
+                    data.forEach(publisher => {
+                        const option = document.createElement("option");
+                        option.value = publisher.publisher_id;
+                        option.textContent = publisher.publisher_name;
+                        publisherDropdown.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching publishers:', error);
+                });
+
+            // Fetch genres from the server and populate the genre dropdown
+            fetch("/get_genres")
+                .then(response => response.json())
+                .then(data => {
+                    const genreDropdown = document.getElementById("genre");
+                    data.forEach(genre => {
+                        const option = document.createElement("option");
+                        option.value = genre.genre_id;
+                        option.textContent = genre.genre_name;
+                        genreDropdown.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching genres:', error);
+                });
+        });
+
+        function addGame() {
+            const name = document.getElementById('name').value;
+            const year = document.getElementById('year').value;
+            const platform = document.getElementById('platform').value;
+            const publisher = document.getElementById('publisher').value;
+            const genre = document.getElementById('genre').value;
+            const na_sales = document.getElementById('na_sales').value;
+            const eu_sales = document.getElementById('eu_sales').value;
+            const jp_sales = document.getElementById('jp_sales').value;
+            const other_sales = document.getElementById('other_sales').value;
+
+            const gameData = {
+                name: name,
+                year: year,
+                platform: platform,
+                publisher: publisher,
+                genre: genre,
+                na_sales: na_sales,
+                eu_sales: eu_sales,
+                jp_sales: jp_sales,
+                other_sales: other_sales
+            };
+
+            fetch('/gameadd', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(gameData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                if (data.success) {
+            window.location.href = '/admindash'; // Redirect to admin dashboard
+        }
+
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>
