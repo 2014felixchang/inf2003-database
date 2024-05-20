@@ -49,10 +49,15 @@ pool.getConnection((error) => {
 // Redirect to register page on first launch
 app.get("/", (request, response) => {
     if (request.session.loggedin) {
-        response.redirect("/index2");
+        response.redirect("/index");
     } else {
-        response.redirect("/register");
+        response.redirect("/frontpage");
     }
+});
+
+// Serve as main page
+app.get("/frontpage", (request, response) => {
+    response.sendFile(__dirname + "/frontpage.html");
 });
 
 // Serve registration page
@@ -65,10 +70,21 @@ app.get("/login", (request, response) => {
     response.sendFile(__dirname + "/login.html");
 });
 
+// Serve as admin login page
+app.get("/admin", (request, response) => {
+    response.sendFile(__dirname + "/admin.html");
+});
+
+// Serve as admin dashboard
+app.get("/admindash", (request, response) => {
+    response.sendFile(__dirname + "/admindash.html");
+});
+
+
 // Serve index page
 app.get("/index", (request, response) => {
     if (request.session.loggedin) {
-        response.sendFile(__dirname + "/index2.html");
+        response.sendFile(__dirname + "/index.html");
     } else {
         response.redirect("/login");
     }
@@ -121,11 +137,11 @@ app.post('/login', (req, res) => {
 });
 
 //Crate Route handle get request
-app.get("/get_games", (request, response) => {
-	const sql = "SELECT * FROM games WHERE name LIKE '%" + request.query.search + "%'";
+app.get("/get_data", (request, response) => {
+	const sql = 'SELECT * FROM games ORDER BY game_id ASC';
 
 	pool.query(sql, (error, results) => {
-		console.log(results);
+		console.log(error);
 		response.send(results);
 
 	});
