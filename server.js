@@ -122,7 +122,7 @@ app.post('/login', (req, res) => {
 
 //Crate Route handle get request
 app.get("/get_data", (request, response) => {
-	const sql = 'SELECT * FROM sample_data ORDER BY id ASC';
+	const sql = 'SELECT * FROM games ORDER BY game_id ASC';
 
 	pool.query(sql, (error, results) => {
 		console.log(error);
