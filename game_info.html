@@ -5,36 +5,60 @@
     <title>Website</title>
     <link href="https://getbootstrap.com/docs/5.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
 </head>
-
 <body>
     <nav class="navbar navbar-light bg-light">
         <div class="container-fluid">
           <a class="navbar-brand" href="/">Gamepedia</a>
           <a class="btn btn-primary" href="/login" role="button">Login</a>
         </div>
-      </nav>
+    </nav>
 
     <div class="container-fluid mt-5" style="width: 60%">
-            <div class="mt-3 mb-3">
-                <div class="card">
-                    <div class="card-header">Game</div>
-                    <div class="card-body" id="results">
-                        
-                    </div>
+        <div class="mt-3 mb-3">
+            <div class="card">
+                <div class="card-header">Game</div>
+                <div class="card-body" id="results">
+                    <!-- Game details will be populated here -->
                 </div>
             </div>
+        </div>
+        <div class="mt-3 mb-3">
+            <div class="card">
+                <div class="card-header">Reviews</div>
+                <div class="card-body" id="reviews">
+                    <!-- Reviews will be populated here -->
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 mb-3">
+            <div class="card">
+                <div class="card-header">Add a Review</div>
+                <div class="card-body">
+                    <form id="reviewForm">
+                        <div class="mb-3">
+                            <label for="rating" class="form-label">Rating</label>
+                            <input type="number" class="form-control" id="rating" min="1" max="5" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="comment" class="form-label">Comment</label>
+                            <textarea class="form-control" id="comment" rows="3" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit Review</button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-</body>
 
-<script>
-    const queryString = window.location.search;
-    const urlParams = new URLSearchParams(queryString);
-    const gameId = urlParams.get('gameid')
-    
-    open_game(gameId);
-    
-    const results_body = document.querySelector('#results');
-    function open_game(gameId) {
+    <script>
+        const queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+        const gameId = urlParams.get('gameid');
+
+        const results_body = document.getElementById('results');
+        const reviews_body = document.getElementById('reviews');
+
+        function open_game(gameId) {
             const request = new XMLHttpRequest();
             request.open('GET', '/open_game?id=' + gameId, true);
 
@@ -61,6 +85,60 @@
 
             request.send();
         }
-</script>
 
+        function load_reviews(gameId) {
+            const request = new XMLHttpRequest();
+            request.open('GET', '/get_reviews?gameid=' + gameId, true);
+
+            let html = '';
+
+            request.onreadystatechange = () => {
+                if (request.readyState === XMLHttpRequest.DONE && request.status === 200) {
+                    const reviews = JSON.parse(request.responseText);
+
+                    reviews.forEach(review => {
+                        html += `
+                        <div>
+                            <p>User: ${review.username}</p>
+                            <p>Rating: ${review.rating}</p>
+                            <p>Comment: ${review.comment}</p>
+                            <p>Date: ${review.date}</p>
+                        </div>
+                        `;
+                    });
+
+                    reviews_body.innerHTML = html;
+                }
+            };
+
+            request.send();
+        }
+
+        document.getElementById('reviewForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const rating = document.getElementById('rating').value;
+            const comment = document.getElementById('comment').value;
+
+            fetch('/add_review', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ game_id: gameId, rating, comment })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Review added successfully');
+                    load_reviews(gameId);  // reload reviews after adding a new one
+                } else {
+                    alert('Error adding review');
+                }
+            });
+        });
+
+        open_game(gameId);
+        load_reviews(gameId);
+    </script>
+</body>
 </html>

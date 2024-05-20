@@ -7,17 +7,17 @@ const mysql = require('mysql');
 //import body-parser module
 const bodyParser = require('body-parser');
 
-//creates an instance of the Express application
-const app = express();
-
 //for password hashing
 const bcrypt = require('bcrypt');
 
 // for session management
 const session = require('express-session');
 
+// Create an instance of the Express application
+const app = express();
+
 // Add middleware for parse incoming request body
-app.use(bodyParser.urlencoded({ extended : false }));
+app.use(bodyParser.urlencoded({ extended: false }));
 
 // Add middleware for parse incoming data in JSON
 app.use(bodyParser.json());
@@ -32,18 +32,19 @@ app.use(session({
 
 //Make MySQL Database Connection
 //Change the 'database' value to the one with the data
-var pool  = mysql.createPool({
-  connectionLimit : 10,
-  host : 'inf2003db-felixchang-67bf.g.aivencloud.com',
-  port : '26780',
-  user : 'web',
-  password : 'web',
-  database : 'test'
+var pool = mysql.createPool({
+  connectionLimit: 10,
+  host: 'inf2003db-felixchang-67bf.g.aivencloud.com',
+  port: '26780',
+  user: 'web',
+  password: 'web',
+  database: 'test'
 });
 
-//Check MySQL Database Connection
+// Check MySQL Database Connection
 pool.getConnection((error) => {
-	console.log('MySQL Database is connected Successfully');
+    if (error) throw error;
+    console.log('MySQL Database is connected Successfully');
 });
 
 // Redirect to register page on first launch
@@ -133,6 +134,7 @@ app.post('/login', (req, res) => {
             if (isMatch) {
                 req.session.loggedin = true;
                 req.session.username = username;
+                req.session.user_id = user.id; // store user ID in session
                 res.json({ success: true, message: 'Login successful' });
             } else {
                 res.json({ success: false, message: 'Password incorrect' });
@@ -141,86 +143,53 @@ app.post('/login', (req, res) => {
     });
 });
 
-//Crate Route handle get request
+// Route to get games based on search
 app.get("/get_games", (request, response) => {
-	const sql = "SELECT * FROM games WHERE name LIKE '%" + request.query.search + "%'";
-
-	pool.query(sql, (error, results) => {
-		console.log("Error: " + error);
-		response.send(results);
-
-	});
+    const sql = "SELECT * FROM games WHERE name LIKE '%" + request.query.search + "%'";
+    pool.query(sql, (error, results) => {
+        if (error) console.log("Error: " + error);
+        response.send(results);
+    });
 });
 
+// Route to get game details
 app.get("/open_game", (request, response) => {
     const sql = `SELECT g.game_id, g.name, g.year, g.platform, p.publisher_name as publisher, g2.genre_name as genre
         FROM games g, publishers p, genres g2
         WHERE g.publisher_id = p.publisher_id
         AND g.genre_id = g2.genre_id
-        AND g.game_id = ` + request.query.id;
+        AND g.game_id = ?`;
 
-	pool.query(sql, (error, results) => {
-		console.log("Error: " + error);
-		response.send(results);
-
-	});
+    pool.query(sql, [request.query.id], (error, results) => {
+        if (error) console.log("Error: " + error);
+        response.send(results);
+    });
 });
 
-//Create Route for Insert Data Operation
-app.post("/add_data", (request, response) => {
-
-	const first_name = request.body.first_name;
-
-	const last_name = request.body.last_name;
-
-	const age = request.body.age;
-
-	const sql = 'INSERT INTO sample_data (first_name, last_name, age) VALUES (?, ?, ?)';
-    
-	pool.query(sql, [first_name, last_name, age], (error, results) => {
-		response.json({
-			message : 'Data Added'
-		});
-	});
-
+// Route to retrieve reviews for a game
+app.get("/get_reviews", (request, response) => {
+    const gameId = request.query.gameid;
+    const sql = "SELECT r.rating, r.comment, r.date, u.username FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.game_id = ?";
+    pool.query(sql, [gameId], (error, results) => {
+        if (error) throw error;
+        response.send(results);
+    });
 });
 
-//Create Route for Update Data Operation
-app.post('/update_data', (request, response) => {
+// Route to submit a new review
+app.post("/add_review", (request, response) => {
+    const { game_id, rating, comment } = request.body;
+    const user_id = request.session.user_id; // assuming user_id is stored in session after login
+    const date = new Date().toISOString().slice(0, 10); // get current date in YYYY-MM-DD format
 
-	const variable_name = request.body.variable_name;
-
-	const variable_value = request.body.variable_value;
-
-	const id = request.body.id;
-
-	const sql = `UPDATE sample_data SET `+variable_name+`= "${variable_value}" WHERE id = "${id}"`;
-    console.log(sql);
-
-	pool.query(sql, (error, results) => {
-		response.json({
-			message : 'Data Updated'
-		});
-
-	});
-
+    const sql = "INSERT INTO reviews (user_id, game_id, rating, comment, date) VALUES (?, ?, ?, ?, ?)";
+    pool.query(sql, [user_id, game_id, rating, comment, date], (error, results) => {
+        if (error) throw error;
+        response.json({ success: true, message: 'Review added successfully' });
+    });
 });
 
-//Create Route for Delete data operation
-app.post("/delete_data", (request, response) => {
-
-	const id = request.body.id;
-
-	const sql = `DELETE FROM sample_data WHERE id = '${id}'`;
-
-	pool.query(sql, (error, results) => {
-		response.json({
-			message : 'Data Deleted'
-		});
-	});
-
-});
-
+// Start the server
 app.listen(8080, () => {
-	console.log('Server listening on port 8080');
+    console.log('Server listening on port 8080');
 });
