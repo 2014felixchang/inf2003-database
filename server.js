@@ -1,5 +1,6 @@
 // Imports
 const express = require('express');
+const path = require('path'); 
 const mysql = require('mysql');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
@@ -19,6 +20,9 @@ app.use(session({
     saveUninitialized: false,
     //cookie: { maxAge: 60000 } // 1-minute session
 }));
+
+// Serve static files from the public directory
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Make MySQL Database Connection
 var pool = mysql.createPool({

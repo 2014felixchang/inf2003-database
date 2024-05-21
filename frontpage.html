@@ -12,7 +12,15 @@
             font-family: 'Arial', sans-serif;
         }
 
+        .navbar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
         .navbar-brand {
+            display: flex;
+            align-items: center;
             font-size: 2rem;
             font-weight: bold;
             color: #ff4500;
@@ -21,6 +29,12 @@
 
         .navbar-brand:hover {
             color: #e33e00;
+        }
+
+        .navbar-brand img {
+            height: 500px;
+            width: auto;
+            margin-right: 10px;
         }
 
         h1 {
@@ -68,9 +82,9 @@
 
 <body>
     <nav class="navbar navbar-light bg-light">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#" id="gamepediaLink">Gamepedia</a>
-        </div>
+        <a class="navbar-brand" href="#" id="gamepediaLink">
+            <img src="/logo.jpg" alt="Gamepedia Logo">
+        </a>
     </nav>
     <div class="container mt-5 mb-5">
         <h1 class="text-danger text-center"><b>Choose Login Type</b></h1>

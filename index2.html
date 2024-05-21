@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8">
     <title>Website</title>
-    <link href="https://getbootstrap.com/docs/5.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <link href="https://getbootstrap.com/docs/5.1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
     <style>
         body {
             background-color: #f8f9fa;
@@ -21,6 +23,11 @@
             color: #e33e00;
         }
 
+        .navbar-brand img {
+            height: 130px;
+            width: auto;
+        }
+
         h1 {
             margin-top: 20px;
         }
@@ -30,12 +37,14 @@
             border-radius: 10px;
         }
 
-        .btn-primary, .btn-danger {
+        .btn-primary,
+        .btn-danger {
             font-size: 1.2rem;
             padding: 10px 20px;
         }
 
-        .btn-primary:hover, .btn-danger:hover {
+        .btn-primary:hover,
+        .btn-danger:hover {
             opacity: 0.8;
         }
 
@@ -60,17 +69,21 @@
         }
     </style>
 </head>
+
 <body>
     <nav class="navbar navbar-light bg-light">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/">Gamepedia</a>
+            <a class="navbar-brand" href="#" id="gamepediaLink">
+                <img src="/logo.jpg" alt="Gamepedia Logo">
+            </a>
             <button class="btn btn-danger" onclick="confirmLogout()">Logout</button>
         </div>
     </nav>
 
     <div class="container-fluid mt-5">
         <h1 class="text-danger text-center"><b>Gamepedia</b></h1>
-        <form id="searchForm" class="text-center" onsubmit="event.preventDefault(); load_data(document.getElementById('search').value);">
+        <form id="searchForm" class="text-center"
+            onsubmit="event.preventDefault(); load_data(document.getElementById('search').value);">
             <div class="mb-3 mt-5">
                 <input type="text" class="form-control" id="search" placeholder="Enter a game" required>
             </div>
@@ -151,4 +164,5 @@
         }
     </script>
 </body>
+
 </html>
