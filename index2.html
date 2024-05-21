@@ -49,32 +49,32 @@
     const results_body = document.querySelector('#results');
 
     function load_data(gameSearch) {
-            const request = new XMLHttpRequest();
-            request.open('GET', '/get_games?search=' + gameSearch, true);
+        const request = new XMLHttpRequest();
+        request.open('GET', '/get_games?search=' + gameSearch, true);
 
-            let html = '';
+        let html = '';
 
-            request.onreadystatechange = () => {
-                if (request.readyState === XMLHttpRequest.DONE && request.status === 200) {
-                    const results = JSON.parse(request.responseText);
+        request.onreadystatechange = () => {
+            if (request.readyState === XMLHttpRequest.DONE && request.status === 200) {
+                const results = JSON.parse(request.responseText);
 
-                    results.forEach(result => {
-                        html += `
-                        <tr>
-                            <td>${result.game_id}</td>
-                            <td><a href="/game_info?gameid=${result.game_id}" >${result.name}</a></td>
-                            <td>${result.year}</td>
-                            <td>${result.platform}</td>
-                        </tr>
-                        `;
-                    });
+                results.forEach(result => {
+                    html += `
+                    <tr>
+                        <td>${result.game_id}</td>
+                        <td><a href="/game_info?gameid=${result.game_id}" >${result.name}</a></td>
+                        <td>${result.year}</td>
+                        <td>${result.platform}</td>
+                    </tr>
+                    `;
+                });
 
-                    results_body.innerHTML = html;
-                }
-            };
+                results_body.innerHTML = html;
+            }
+        };
 
-            request.send();
-        }
+        request.send();
+    }
 </script>
 
 </html>
