@@ -17,7 +17,7 @@ app.use(session({
     secret: 'secret-key',
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 60000 } // 1-minute session
+    //cookie: { maxAge: 60000 } // 1-minute session
 }));
 
 // Make MySQL Database Connection
