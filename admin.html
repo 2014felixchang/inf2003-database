@@ -4,12 +4,57 @@
     <meta charset="utf-8">
     <title>Administrator Login</title>
     <link href="https://getbootstrap.com/docs/5.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Arial', sans-serif;
+        }
+
+        h1 {
+            margin-top: 20px;
+        }
+
+        .card {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+
+        .btn-primary {
+            font-size: 1.2rem;
+            padding: 10px 20px;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.8;
+        }
+
+        .form-label {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 600px;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        .text-center {
+            margin-bottom: 20px;
+        }
+
+        .alert {
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <div class="container mt-5 mb-5">
         <h1 class="text-danger text-center"><b>Administrator Login</b></h1>
         <div class="card mt-3 mb-3">
-            <div class="card-header">Login</div>
+            <div class="card-header text-center"><b>Login</b></div>
             <div class="card-body">
                 <form id="adminLoginForm">
                     <div class="mb-3">
@@ -20,8 +65,9 @@
                         <label for="loginPassword" class="form-label">Password</label>
                         <input type="password" class="form-control" id="loginPassword" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Login</button>
+                    <button type="submit" class="btn btn-primary w-100">Login</button>
                 </form>
+                <div id="loginMessage" class="alert mt-3"></div>
             </div>
         </div>
     </div>
@@ -31,16 +77,30 @@
 
             const username = document.getElementById('loginUsername').value;
             const password = document.getElementById('loginPassword').value;
+            const loginMessage = document.getElementById('loginMessage');
 
             // Default username and password for admin
             const defaultUsername = "admin";
             const defaultPassword = "admin";
 
+            console.log(`Username: ${username}, Password: ${password}`);
+
             if (username === defaultUsername && password === defaultPassword) {
-                // Redirect to admin dashboard or any desired page
-                window.location.href = '/admindash';
+                console.log('Admin authorized');
+                // Display success message
+                loginMessage.className = 'alert alert-success';
+                loginMessage.textContent = 'Admin authorized! Redirecting...';
+                loginMessage.style.display = 'block';
+
+                // Redirect to admin dashboard after a short delay
+                setTimeout(() => {
+                    window.location.href = '/admindash';
+                }, 2000);
             } else {
-                alert("Invalid username or password. Please try again.");
+                console.log('Invalid username or password');
+                loginMessage.className = 'alert alert-danger';
+                loginMessage.textContent = 'Invalid username or password. Please try again.';
+                loginMessage.style.display = 'block';
             }
         });
     </script>

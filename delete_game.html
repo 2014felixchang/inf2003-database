@@ -4,6 +4,57 @@
     <meta charset="utf-8">
     <title>Admin Dashboard</title>
     <link href="https://getbootstrap.com/docs/5.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .navbar-brand {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ff4500;
+        }
+
+        .navbar-brand:hover {
+            color: #e33e00;
+        }
+
+        .card {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn-primary, .btn-danger {
+            font-size: 1.2rem;
+            padding: 10px 20px;
+        }
+
+        .btn-primary:hover, .btn-danger:hover {
+            opacity: 0.8;
+        }
+
+        .form-control {
+            font-size: 1.1rem;
+        }
+
+        .container {
+            max-width: 900px;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        .navbar-dark .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .navbar-dark .navbar-nav .nav-link:hover {
+            color: #ffffff;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -24,7 +75,7 @@
                         <a class="nav-link" href="#">Settings</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Logout</a>
+                        <a class="nav-link" href="/frontpage" onclick="confirmLogout()">Logout</a>
                     </li>
                 </ul>
             </div>
@@ -33,11 +84,11 @@
 
     <div class="container mt-5">
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-6 mb-4">
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Game Management</h5>
-                        <p class="card-text">Manage users, view details, and update information.</p>
+                        <p class="card-text">Manage game details</p>
                         <form id="deleteForm">
                             <div class="mb-3">
                                 <label for="gameId" class="form-label">Game ID:</label>
@@ -48,9 +99,13 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <h5>Back to Dashboard</h5>
-                <a href="admindash" class="btn btn-primary">Back</a>
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Back to Dashboard</h5>
+                        <a href="admindash" class="btn btn-primary">Back</a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -74,6 +129,27 @@
             .catch(error => {
                 console.error('Error:', error);
             });
+        }
+
+        function confirmLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                const request = new XMLHttpRequest();
+                request.open('POST', '/logout', true);
+                request.setRequestHeader('Content-Type', 'application/json');
+
+                request.onreadystatechange = () => {
+                    if (request.readyState === XMLHttpRequest.DONE && request.status === 200) {
+                        const response = JSON.parse(request.responseText);
+                        alert(response.message);
+                        if (response.success) {
+                            window.location.href = '/';
+                        }
+                    }
+                };
+
+                const data = JSON.stringify({});
+                request.send(data);
+            }
         }
     </script>
 </body>
