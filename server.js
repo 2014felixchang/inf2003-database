@@ -1,25 +1,15 @@
-//imports the Express framework
+// Imports
 const express = require('express');
-
-//import mysql module
 const mysql = require('mysql');
-
-//import body-parser module
 const bodyParser = require('body-parser');
-
-//for password hashing
 const bcrypt = require('bcrypt');
-
-// for session management
 const session = require('express-session');
 
 // Create an instance of the Express application
 const app = express();
 
-// Add middleware for parse incoming request body
+// Add middleware for parsing incoming request bodies
 app.use(bodyParser.urlencoded({ extended: false }));
-
-// Add middleware for parse incoming data in JSON
 app.use(bodyParser.json());
 
 // Session setup
@@ -30,8 +20,7 @@ app.use(session({
     cookie: { maxAge: 60000 } // 1-minute session
 }));
 
-//Make MySQL Database Connection
-//Change the 'database' value to the one with the data
+// Make MySQL Database Connection
 var pool = mysql.createPool({
   connectionLimit: 10,
   host: 'inf2003db-felixchang-67bf.g.aivencloud.com',
@@ -44,7 +33,7 @@ var pool = mysql.createPool({
 // Check MySQL Database Connection
 pool.getConnection((error) => {
     if (error) throw error;
-    console.log('MySQL Database is connected Successfully');
+    console.log('MySQL Database is connected successfully');
 });
 
 // Redirect to register page on first launch
@@ -94,7 +83,6 @@ app.get("/game_info", (request, response) => {
     response.sendFile(__dirname + "/game_info.html");
 });
 
-
 // Serve index page
 app.get("/index", (request, response) => {
     if (request.session.loggedin) {
@@ -112,13 +100,11 @@ app.get("/get_platforms", (req, res) => {
             console.error('Error fetching platforms:', error);
             res.status(500).json({ error: 'Error fetching platforms' });
         } else {
-            // Extract the platform names from the results
             const platforms = results.map(result => result.platform);
             res.json(platforms);
         }
     });
 });
-
 
 // Route to get publishers
 app.get("/get_publishers", (req, res) => {
@@ -146,11 +132,9 @@ app.get("/get_genres", (req, res) => {
     });
 });
 
-
 // Register Route
 app.post('/register', (req, res) => {
-    const username = req.body.username;
-    const password = req.body.password;
+    const { username, password } = req.body;
 
     bcrypt.hash(password, 10, (err, hash) => {
         if (err) throw err;
@@ -167,8 +151,7 @@ app.post('/register', (req, res) => {
 
 // Login Route
 app.post('/login', (req, res) => {
-    const username = req.body.username;
-    const password = req.body.password;
+    const { username, password } = req.body;
 
     const sql = 'SELECT * FROM users WHERE username = ?';
     pool.query(sql, [username], (error, results) => {
@@ -194,6 +177,27 @@ app.post('/login', (req, res) => {
     });
 });
 
+// Logout Route
+app.post('/logout', (req, res) => {
+    console.log('Logout request received');
+    req.session.destroy((err) => {
+        if (err) {
+            console.error('Error destroying session:', err);
+            return res.json({ success: false, message: 'Logout failed' });
+        }
+        res.json({ success: true, message: 'Logout successful' });
+    });
+});
+
+// Check login status
+app.get('/check-login-status', (req, res) => {
+    if (req.session.loggedin) {
+        res.json({ isLoggedIn: true });
+    } else {
+        res.json({ isLoggedIn: false });
+    }
+});
+
 // Route to add game details
 app.post('/gameadd', (req, res) => {
     const { name, year, platform, publisher, genre, na_sales, eu_sales, jp_sales, other_sales } = req.body;
@@ -206,7 +210,6 @@ app.post('/gameadd', (req, res) => {
         res.json({ success: true, message: 'Game added successfully' });
     });
 });
-
 
 // Route to get games based on search
 app.get("/get_games", (request, response) => {
@@ -298,7 +301,6 @@ app.delete('/delete_review/:gameId/:username', (req, res) => {
         });
     });
 });
-
 
 // Start the server
 app.listen(8080, () => {

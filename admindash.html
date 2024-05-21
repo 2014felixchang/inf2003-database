@@ -24,7 +24,7 @@
                         <a class="nav-link" href="#">Settings</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Logout</a>
+                        <a class="nav-link" href="/frontpage" onclick="confirmLogout()">Logout</a>
                     </li>
                 </ul>
             </div>
@@ -33,7 +33,7 @@
 
     <div class="container mt-5">
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-6 mb-4">
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Game Management</h5>
@@ -43,7 +43,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6 mb-4">
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Settings</h5>
@@ -61,11 +61,33 @@
                         </form>
                     </div>
                 </div>
+            </div>
         </div>
     </div>
 
     <script src="https://getbootstrap.com/docs/5.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-QN6eu6jo1i8v9SAz3k4XYLOLznAm12aLp1DqPiIF/DJyMMpdw1VQ6DkUtJ8lP2q+H" crossorigin="anonymous"></script>
     <script>
+        function confirmLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                const request = new XMLHttpRequest();
+                request.open('POST', '/logout', true);
+                request.setRequestHeader('Content-Type', 'application/json');
+
+                request.onreadystatechange = () => {
+                    if (request.readyState === XMLHttpRequest.DONE && request.status === 200) {
+                        const response = JSON.parse(request.responseText);
+                        alert(response.message);
+                        if (response.success) {
+                            window.location.href = '/';
+                        }
+                    }
+                };
+
+                const data = JSON.stringify({});
+                request.send(data);
+            }
+        }
+
         function deleteReview() {
             const gameId = parseInt(document.getElementById('gameId').value);
             const username = document.getElementById('username').value;
