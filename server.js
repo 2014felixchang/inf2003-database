@@ -224,6 +224,27 @@ app.get("/get_games", (request, response) => {
     });
 });
 
+// Define a new route that accepts a filter parameter
+app.get('/get_games_f', (req, res) => {
+    // Get the filter parameter from the request query
+    const filter = req.query.filter;
+
+    let query = 'SELECT * FROM games';
+    if (filter === 'top10') {
+        query += ' ORDER BY game_id LIMIT 10';
+    }
+
+    // Connect to the database and execute the query
+    pool.query(query, (error, results) => {
+        if (error) {
+            console.log("Error: " + error);
+        } else {
+            // If everything went well, send the results
+            res.send(results);
+        }
+    });
+});
+
 // Route to get game details
 app.get("/open_game", (request, response) => {
     const sql = `SELECT g.game_id, g.name, g.year, g.platform, p.publisher_name as publisher, g2.genre_name as genre
