@@ -28,9 +28,12 @@
             width: auto;
         }
 
-        h1,
-        h4 {
+        h1 {
             margin-top: 20px;
+        }
+
+        h4 {
+            margin: 0%;
         }
 
         .card {
@@ -66,6 +69,15 @@
 
         .alert {
             display: none;
+        }
+
+        .td-label {
+            float: right;
+            border-style: hidden;
+        }
+
+        tr {
+            border-style: hidden;
         }
     </style>
 </head>
@@ -132,11 +144,30 @@
 
                     results.forEach(result => {
                         html += `
-                        <h4>Name: ${result.name}</h4>
-                        <h4>Released: ${result.year}</h4>
-                        <h4>Platform: ${result.platform}</h4>
-                        <h4>Publisher: ${result.publisher}</h4>
-                        <h4>Genre: ${result.genre}</h4>
+                        <table class="table">
+                            <tbody >
+                                <tr>
+                                    <td class="td-label"><h4>Name: </h4></td>
+                                    <td><h4>${result.name}</h4></td>
+                                </tr>
+                                <tr>
+                                    <td class="td-label"><h4>Released: </h4></td>
+                                    <td><h4>${result.year}</h4></td>
+                                </tr>
+                                <tr>
+                                    <td class="td-label"><h4>Platform: </h4></td>
+                                    <td><h4>${result.platform}</h4></td>
+                                </tr>
+                                <tr>
+                                    <td class="td-label"><h4>Publisher: </h4></td>
+                                    <td><h4>${result.publisher}</h4></td>
+                                </tr>
+                                <tr>
+                                    <td class="td-label"><h4>Genre: </h4></td>
+                                    <td><h4>${result.genre}</h4></td>
+                                </tr>
+                            </tbody>
+                        </table>
                         `;
                     });
 
@@ -161,7 +192,7 @@
                         html += `
                         <div class="card mb-3">
                             <div class="card-header">
-                            <strong>Rating: ${review.rating} / 5</strong>
+                            <strong style="font-size: large;">${review.rating} / 5</strong>
                             </div>
                             <div class="card-body">
                                 <blockquote class="blockquote mb-0">
