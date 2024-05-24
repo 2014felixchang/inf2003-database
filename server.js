@@ -87,6 +87,11 @@ app.get("/game_info", (request, response) => {
     response.sendFile(__dirname + "/game_info.html");
 });
 
+// Serve as modification of game
+app.get("/modify", (request, response) => {
+    response.sendFile(__dirname + "/modify_game.html");
+});
+
 // Serve index page
 app.get("/index", (request, response) => {
     if (request.session.loggedin) {
@@ -272,7 +277,8 @@ app.get("/open_game", (request, response) => {
 // Route to retrieve reviews for a game
 app.get("/get_reviews", (request, response) => {
     const gameId = request.query.gameid;
-    const sql = "SELECT r.rating, r.comment, DATE_FORMAT(r.date, '%Y-%m-%d') as date, u.username FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.game_id = ?";
+    const sql = "SELECT r.review_id, r.rating, r.comment, DATE_FORMAT(r.date, '%Y-%m-%d') as date, u.username, r.user_id FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.game_id = ?";
+    
     pool.query(sql, [gameId], (error, results) => {
         if (error) throw error;
         response.send(results);
@@ -297,45 +303,45 @@ app.post("/add_review", (request, response) => {
     });
 });
 
+
+
 app.delete('/delete_game/:gameId', (req, res) => {
     const gameId = req.params.gameId;
-
     const sql = 'DELETE FROM games WHERE game_id = ?';
-    pool.query(sql, [gameId], (error, results) => {
+    connection.query(sql, [gameId], (error) => {
         if (error) {
-            return res.json({ success: false, message: 'Failed to delete game', error });
+            console.error('Error deleting game:', error);
+            res.status(500).send('Error deleting game');
+        } else {
+            console.log('Game deleted successfully');
+            res.status(200).send('Game deleted successfully yay');
         }
-        res.json({ success: true, message: 'Game deleted successfully' });
     });
 });
 
-app.delete('/delete_review/:gameId/:username', (req, res) => {
-    const gameId = req.params.gameId;
-    const username = req.params.username;
 
-    // Retrieve the user_id based on the provided username
-    const getUserIdQuery = 'SELECT id FROM users WHERE username = ?';
-    pool.query(getUserIdQuery, [username], (error, results) => {
-        if (error) {
-            return res.json({ success: false, message: 'Failed to delete review', error });
+// POST route to remove a review
+app.post('/delete_review', async (req, res) => {
+    const reviewId = req.body.reviewId; 
+    const username = req.session.username;
+
+    try {
+        // Perform the deletion in the database
+        const result = await pool.query('DELETE FROM reviews WHERE review_id = ? AND user_id = (SELECT id FROM users WHERE username = ?)', [reviewId, username]);
+
+        if (result.affectedRows === 1) {
+            // Deletion successful
+            res.status(200).json({ message: 'Review deleted successfully' });
+        } else {
+            // Review with given ID not found
+            res.status(404).json({ message: 'Review not found' });
         }
-        
-        if (results.length === 0) {
-            return res.json({ success: false, message: 'User not found' });
-        }
-
-        const userId = results[0].id;
-
-        // Delete the review based on user_id and game_id
-        const deleteReviewQuery = 'DELETE FROM reviews WHERE user_id = ? AND game_id = ?';
-        pool.query(deleteReviewQuery, [userId, gameId], (error, results) => {
-            if (error) {
-                return res.json({ success: false, message: 'Failed to delete review', error });
-            }
-            res.json({ success: true, message: 'Review deleted successfully' });
-        });
-    });
+    } catch (error) {
+        console.error('Error deleting review:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
 });
+
 
 // Start the server
 app.listen(8080, () => {
