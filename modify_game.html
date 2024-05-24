@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Game Details</title>
+    <link href="https://getbootstrap.com/docs/5.1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .navbar-brand {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ff4500;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+        }
+
+        .navbar-brand:hover {
+            color: #e33e00;
+        }
+
+        .navbar-brand img {
+            height: 130px;
+            width: auto;
+        }
+
+        h1 {
+            margin-top: 20px;
+        }
+
+        h4 {
+            margin: 0%;
+        }
+
+        .card {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn-primary {
+            font-size: 1.2rem;
+            padding: 10px 20px;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.8;
+        }
+
+        .form-control {
+            font-size: 1.1rem;
+        }
+
+        .container-fluid {
+            max-width: 800px;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        .text-center {
+            margin-bottom: 20px;
+        }
+
+        .alert {
+            display: none;
+        }
+
+        .td-label {
+            float: right;
+            border-style: hidden;
+        }
+
+        tr {
+            border-style: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#" id="gamepediaLink">
+                <img src="/logo.jpg" alt="Gamepedia Logo">
+            </a>
+            <button class="btn btn-danger" onclick="confirmLogout()">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-5">
+        <button class="btn btn-secondary mb-3" onclick="history.back()">Back</button>
+        <div class="card">
+            <div class="card-header">Game Details</div>
+            <div class="card-body" id="results">
+                <!-- Game details will be populated here -->
+            </div>
+            <div class="card-footer">
+                <button class="btn btn-primary" onclick="saveChanges()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+        const gameId = urlParams.get('gameid');
+
+        const results_body = document.getElementById('results');
+        let gameDetails = {};
+
+        function open_game(gameId) {
+            const request = new XMLHttpRequest();
+            request.open('GET', '/open_game?id=' + gameId, true);
+
+            request.onreadystatechange = () => {
+                if (request.readyState === XMLHttpRequest.DONE && request.status === 200) {
+                    gameDetails = JSON.parse(request.responseText);
+                    renderGameDetails(gameDetails);
+                }
+            };
+
+            request.send();
+        }
+
+        function renderGameDetails(details) {
+            let html = '';
+            details.forEach(result => {
+                html += `
+                    <table class="table">
+                        <tbody >
+                            <tr>
+                                <td class="td-label"><h4>Name: </h4></td>
+                                <td><h4><span id="name">${result.name}</span></h4></td>
+                                <td><button class="btn btn-primary" onclick="editField('name')">Edit</button></td>
+                            </tr>
+                            <tr>
+                                <td class="td-label"><h4>Released: </h4></td>
+                                <td><h4><span id="released">${result.year}</span></h4></td>
+                                <td><button class="btn btn-primary" onclick="editField('released')">Edit</button></td>
+                            </tr>
+                            <tr>
+                                <td class="td-label"><h4>Platform: </h4></td>
+                                <td><h4><span id="platform">${result.platform}</span></h4></td>
+                                <td><button class="btn btn-primary" onclick="editField('platform')">Edit</button></td>
+                            </tr>
+                            <tr>
+                                <td class="td-label"><h4>Publisher: </h4></td>
+                                <td><h4><span id="publisher">${result.publisher}</span></h4></td>
+                                <td><button class="btn btn-primary" onclick="editField('publisher')">Edit</button></td>
+                            </tr>
+                            <tr>
+                                <td class="td-label"><h4>Genre: </h4></td>
+                                <td><h4><span id="genre">${result.genre}</span></h4></td>
+                                <td><button class="btn btn-primary" onclick="editField('genre')">Edit</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                `;
+            });
+
+            results_body.innerHTML = html;
+        }
+
+        function confirmLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                const request = new XMLHttpRequest();
+                request.open('POST', '/logout', true);
+                request.setRequestHeader('Content-Type', 'application/json');
+
+                request.onreadystatechange = () => {
+                    if (request.readyState === XMLHttpRequest.DONE && request.status === 200) {
+                        const response = JSON.parse(request.responseText);
+                        alert(response.message);
+                        if (response.success) {
+                            window.location.href = '/';
+                        }
+                    }
+                };
+
+                const data = JSON.stringify({});
+                request.send(data);
+            }
+        }
+
+        function editField(fieldName) {
+            const fieldSpan = document.getElementById(fieldName);
+            const fieldValue = fieldSpan.innerText;
+            const newValue = prompt(`Enter new ${fieldName}:`, fieldValue);
+            if (newValue !== null) {
+                fieldSpan.innerText = newValue;
+                gameDetails[fieldName] = newValue;
+            }
+        }
+
+        function saveChanges() {
+            fetch(`/update_game/${gameId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(gameDetails)
+            })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Changes saved successfully!');
+                    } else {
+                        alert('Failed to save changes.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error saving changes:', error);
+                    alert('Failed to save changes. Please try again later.');
+                });
+        }
+
+        open_game(gameId);
+    </script>
+</body>
+
+</html>
