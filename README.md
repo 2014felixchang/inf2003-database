@@ -14,6 +14,12 @@ Dependencies/Libraries needed:
 4) Run 'npm install express-session bcrypt' on terminal as well
 This is to install the necessary libraries
 (P.S. You would need to install node.js as 'npm' is part of node.js)
+IF EVERYTHING STILL DONT WORK, GO inside the directory and perform the following commands:
+npm rebuild bcrypt
+npm uninstall bcrypt
+npm install bcrypt
+optional: npm cache clean --force
+
 
 To run the web app:
 1) Open Terminal/Command Prompt
