@@ -217,7 +217,7 @@ app.post('/gameadd', (req, res) => {
 
 // Route to get games based on search
 app.get("/get_games", (request, response) => {
-    const sql = "SELECT * FROM games WHERE name LIKE '%" + request.query.search + "%'";
+    const sql = "SELECT games.*, genres.genre_name FROM games JOIN genres ON games.genre_id = genres.genre_id WHERE games.name LIKE '%" + request.query.search + "%'";
     pool.query(sql, (error, results) => {
         if (error) console.log("Error: " + error);
         response.send(results);
@@ -229,14 +229,20 @@ app.get('/get_games_f', (req, res) => {
     // Get the filter parameter from the request query
     const filter = req.query.filter;
     const platform = req.query.platform;
+    const genre = req.query.genre;
 
-    let query = 'SELECT * FROM games';
-    if (platform !== 'All') {
-        query += ` AND platform = '${platform}'`;
+    let query = 'SELECT games.*, genres.genre_name FROM games JOIN genres ON games.genre_id = genres.genre_id WHERE 1=1';
+    
+    if (platform !== 'ALL') {
+        query += ` AND games.platform = '${platform}'`;
+    }
+    if (genre !== 'ALL') {
+        query += ` AND genres.genre_name = '${genre}'`;
     }
     if (filter === 'top10') {
-        query += ' ORDER BY game_id LIMIT 10';
+        query += ' ORDER BY games.game_id LIMIT 10';
     }
+    
 
     // Connect to the database and execute the query
     pool.query(query, (error, results) => {
