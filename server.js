@@ -228,8 +228,12 @@ app.get("/get_games", (request, response) => {
 app.get('/get_games_f', (req, res) => {
     // Get the filter parameter from the request query
     const filter = req.query.filter;
+    const platform = req.query.platform;
 
     let query = 'SELECT * FROM games';
+    if (platform !== 'All') {
+        query += ` AND platform = '${platform}'`;
+    }
     if (filter === 'top10') {
         query += ' ORDER BY game_id LIMIT 10';
     }

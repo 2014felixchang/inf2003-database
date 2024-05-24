@@ -94,10 +94,45 @@
                 <div class="card-header">
                     
                     Results
-                    <select id="filter">
+                    <select id="top10">
                         <option value="all">All</option>
                         <option value="top10">Top 10</option>
                         <!-- Add more options as needed -->
+                    </select>
+
+                    <select id="platform">
+                        <option value="ALL">All</option>
+                        <option value="NES">NES</option>
+                        <option value="Wii">Wii</option>
+                        <option value="GB">GB</option>
+                        <option value="DS">DS</option>
+                        <option value="X360">X360</option>
+                        <option value="PS3">PS3</option>
+                        <option value="PS2">PS2</option>
+                        <option value="SNES">SNES</option>
+                        <option value="GBA">GBA</option>
+                        <option value="3DS">3DS</option>
+                        <option value="PS4">PS4</option>
+                        <option value="N64">N64</option>
+                        <option value="PS">PS</option>
+                        <option value="XB">XB</option>
+                        <option value="PC">PC</option>
+                        <option value="2600">2600</option>
+                        <option value="PSP">PSP</option>
+                        <option value="XOne">XOne</option>
+                        <option value="GC">GC</option>
+                        <option value="WiiU">WiiU</option>
+                        <option value="GEN">GEN</option>
+                        <option value="DC">DC</option>
+                        <option value="PSV">PSV</option>
+                        <option value="SAT">SAT</option>
+                        <option value="SCD">SCD</option>
+                        <option value="WS">WS</option>
+                        <option value="NG">NG</option>
+                        <option value="TG16">TG16</option>
+                        <option value="3DO">3DO</option>
+                        <option value="GG">GG</option>
+                        <option value="PCFX">PCFX</option>
                     </select>
 
 
@@ -123,33 +158,43 @@
     </div>
 
     <script>
-        document.getElementById('filter').addEventListener('change', function() {
-            // When the selected option changes, make a request to your server
-            const request = new XMLHttpRequest();
-            //request.open('GET', '/get_games_f?filter=' + this.value, true);
-            /*
-            request.onload = function() {
-                if (request.status >= 200 && request.status < 400) {
-                    // When the request returns, update your table with the returned games
-                    const games = JSON.parse(request.responseText);
-                    let html = '';
-                    games.forEach(game => {
-                        html += `<tr>
-                            <td>${game.game_id}</td>
-                            <td>${game.name}</td>
-                            <td>${game.year}</td>
-                            <td>${game.platform}</td>
-                        </tr>`;
-                    });
-                    results_body.innerHTML = html;
-                }
-            };
-            */
-            request.send();
-        });
+            const top10 = document.getElementById('top10'); 
+            const platform = document.getElementById('platform');
+            const results_body = document.querySelector('#results');
+
+            function load_values(top10_value, platform_value){
+                const request = new XMLHttpRequest();
+                request.open('GET', '/get_games_f?filter=' + top10_value +'&platform=' + platform_value, true);
+                request.onreadystatechange = () => {
+                    if (request.readyState === XMLHttpRequest.DONE && request.status === 200) {
+                        const results = JSON.parse(request.responseText);
+                        let html = '';
+                        results.forEach(result => {
+                            html += `
+                            <tr>
+                                <!-- <td>${result.game_id}</td> -->
+                                <td><a href="/game_info?gameid=${result.game_id}" >${result.name}</a></td>
+                                <td>${result.year}</td>
+                                <td>${result.platform}</td>
+                            </tr>
+                            `;
+                        });
+                        results_body.innerHTML = html;
+                    }
+                };
+                request.send();
+            }
+            function handleDropdownChange(){
+                load_values(top10.value, platform.value);
+            }
+
+            top10.addEventListener('change', handleDropdownChange);
+            platform.addEventListener('change', handleDropdownChange);
+        
+    
 
 
-        const results_body = document.querySelector('#results');
+        //const results_body = document.querySelector('#results');
 
         function load_data(gameSearch) {
             const request = new XMLHttpRequest();
