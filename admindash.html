@@ -63,16 +63,7 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="#">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Users</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Settings</a>
-                    </li>
+                <ul class="navbar-nav ms-auto"> <!-- Align items to the right -->
                     <li class="nav-item">
                         <a class="nav-link" href="/frontpage" onclick="confirmLogout()">Logout</a>
                     </li>
@@ -83,32 +74,13 @@
 
     <div class="container mt-5">
         <div class="row">
-            <div class="col-md-6 mb-4">
+            <div class="col-md-6 mx-auto mb-4"> <!-- Center align the column -->
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Game Management</h5>
                         <p class="card-text">Manage game details</p>
                         <a href="/gameadd" class="btn btn-primary">Add Game</a>
-                        <a href="/gamedelete" class="btn btn-danger">Delete Game</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Settings</h5>
-                        <p class="card-text">Delete reviews by providing the username and game ID.</p>
-                        <form id="deleteReviewForm">
-                            <div class="mb-3">
-                                <label for="username" class="form-label">Username:</label>
-                                <input type="text" class="form-control" id="username" name="username" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="gameId" class="form-label">Game ID:</label>
-                                <input type="number" class="form-control" id="gameId" name="gameId" required>
-                            </div>
-                            <button type="button" class="btn btn-danger" onclick="deleteReview()">Delete Review</button>
-                        </form>
+                        <a href="/gamedelete" class="btn btn-danger">Edit Game</a>
                     </div>
                 </div>
             </div>
@@ -138,24 +110,7 @@
             }
         }
 
-        function deleteReview() {
-            const gameId = parseInt(document.getElementById('gameId').value);
-            const username = document.getElementById('username').value;
-
-            fetch(`/delete_review/${gameId}/${username}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-        }
+        
     </script>
 </body>
 </html>
