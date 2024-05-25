@@ -322,20 +322,28 @@ app.delete('/delete_game/:gameId', (req, res) => {
 
 // POST route to remove a review
 app.post('/delete_review', async (req, res) => {
-    const reviewId = req.body.reviewId; 
+    //const requestData = JSON.parse(req.body);
+    const reviewId = req.body.reviewId;
     const username = req.session.username;
+   const review_username=req.body.reviewUsername;
+    console.log(reviewId);
+    console.log(review_username);
+
+    console.log(username);
 
     try {
-        // Perform the deletion in the database
+        if (username==review_username){
         const result = await pool.query('DELETE FROM reviews WHERE review_id = ? AND user_id = (SELECT id FROM users WHERE username = ?)', [reviewId, username]);
-
-        if (result.affectedRows === 1) {
-            // Deletion successful
-            res.status(200).json({ message: 'Review deleted successfully' });
-        } else {
-            // Review with given ID not found
-            res.status(404).json({ message: 'Review not found' });
+        res.status(200).json({ message: 'Review deleted successfully' });
         }
+        else{
+        res.status(200).json({ message: 'You have no rights to delete' });
+        }
+
+
+          
+        
+    
     } catch (error) {
         console.error('Error deleting review:', error);
         res.status(500).json({ message: 'Internal server error' });
