@@ -322,6 +322,20 @@ app.post("/add_review", (request, response) => {
     });
 });
 
+app.delete('/delete_game/:gameId', (req, res) => {
+    const gameId = req.params.gameId;
+    const sql = 'DELETE FROM games WHERE game_id = ?';
+    connection.query(sql, [gameId], (error) => {
+        if (error) {
+            console.error('Error deleting game:', error);
+            res.status(500).send('Error deleting game');
+        } else {
+            console.log('Game deleted successfully');
+            res.status(200).send('Game deleted successfully yay');
+        }
+    });
+});
+
 
 
 
