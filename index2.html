@@ -114,73 +114,76 @@
                 <div class="card-header">
                     <div class="header-container">
                         <div>Results</div>
-                        <div class="dropdown-container">
-                            <label for="ranking">Ranking:</label>                     
-                            <select id="ranking">
-                                <option value="all">All</option>
-                                <option value="top10">Top 10</option>
-                                <!-- Add more options as needed -->
-                            </select>
-                        </div>
-                    
-                        <div class="dropdown-container">
-                            <label for="platform">Platform:</label>
-                            <select id="platform">
-                                <option value="ALL">All</option>
-                                <option value="NES">NES</option>
-                                <option value="Wii">Wii</option>
-                                <option value="GB">GB</option>
-                                <option value="DS">DS</option>
-                                <option value="X360">X360</option>
-                                <option value="PS3">PS3</option>
-                                <option value="PS2">PS2</option>
-                                <option value="SNES">SNES</option>
-                                <option value="GBA">GBA</option>
-                                <option value="3DS">3DS</option>
-                                <option value="PS4">PS4</option>
-                                <option value="N64">N64</option>
-                                <option value="PS">PS</option>
-                                <option value="XB">XB</option>
-                                <option value="PC">PC</option>
-                                <option value="2600">2600</option>
-                                <option value="PSP">PSP</option>
-                                <option value="XOne">XOne</option>
-                                <option value="GC">GC</option>
-                                <option value="WiiU">WiiU</option>
-                                <option value="GEN">GEN</option>
-                                <option value="DC">DC</option>
-                                <option value="PSV">PSV</option>
-                                <option value="SAT">SAT</option>
-                                <option value="SCD">SCD</option>
-                                <option value="WS">WS</option>
-                                <option value="NG">NG</option>
-                                <option value="TG16">TG16</option>
-                                <option value="3DO">3DO</option>
-                                <option value="GG">GG</option>
-                                <option value="PCFX">PCFX</option>
-                            </select>
-                        </div>
-                        <div class="dropdown-container">
-                            <label for="genre">Genre:</label>
-                            <select id="genre">
-                                <option value="ALL">All</option>
-                                <option value="Sports">Sports</option>
-                                <option value="Platform">Platform</option>
-                                <option value="Racing">Racing</option>
-                                <option value="Role-Playing">Role-Playing</option>
-                                <option value="Puzzle">Puzzle</option>
-                                <option value="Misc">Misc</option>
-                                <option value="Shooter">Shooter</option>
-                                <option value="Simulation">Simulation</option>
-                                <option value="Action">Action</option>
-                                <option value="Fighting">Fighting</option>
-                                <option value="Adventure">Adventure</option>
-                                <option value="Strategy">Strategy</option>
-                            </select>
+                        <div class="d-flex justify-content-center mb-3">
+                            <div class="dropdown-container d-flex align-items-center">
+                                <label for="ranking" class="me-2">Ranking:</label>                     
+                                <select id="ranking" class="form-select mx-3">
+                                    <option value="all">All</option>
+                                    <option value="top10">Top 10</option>
+                                    <!-- Add more options as needed -->
+                                </select>
+                            </div>
+                        
+                            <div class="dropdown-container d-flex align-items-center">
+                                <label for="platform" class="me-2">Platform:</label>
+                                <select id="platform" class="form-select mx-3">
+                                    <option value="ALL">All</option>
+                                    <option value="NES">NES</option>
+                                    <option value="Wii">Wii</option>
+                                    <option value="GB">GB</option>
+                                    <option value="DS">DS</option>
+                                    <option value="X360">X360</option>
+                                    <option value="PS3">PS3</option>
+                                    <option value="PS2">PS2</option>
+                                    <option value="SNES">SNES</option>
+                                    <option value="GBA">GBA</option>
+                                    <option value="3DS">3DS</option>
+                                    <option value="PS4">PS4</option>
+                                    <option value="N64">N64</option>
+                                    <option value="PS">PS</option>
+                                    <option value="XB">XB</option>
+                                    <option value="PC">PC</option>
+                                    <option value="2600">2600</option>
+                                    <option value="PSP">PSP</option>
+                                    <option value="XOne">XOne</option>
+                                    <option value="GC">GC</option>
+                                    <option value="WiiU">WiiU</option>
+                                    <option value="GEN">GEN</option>
+                                    <option value="DC">DC</option>
+                                    <option value="PSV">PSV</option>
+                                    <option value="SAT">SAT</option>
+                                    <option value="SCD">SCD</option>
+                                    <option value="WS">WS</option>
+                                    <option value="NG">NG</option>
+                                    <option value="TG16">TG16</option>
+                                    <option value="3DO">3DO</option>
+                                    <option value="GG">GG</option>
+                                    <option value="PCFX">PCFX</option>
+                                </select>
+                            </div>
+                            <div class="dropdown-container d-flex align-items-center">
+                                <label for="genre" class="me-2">Genre:</label>
+                                <select id="genre" class="form-select mx-3">
+                                    <option value="ALL">All</option>
+                                    <option value="Sports">Sports</option>
+                                    <option value="Platform">Platform</option>
+                                    <option value="Racing">Racing</option>
+                                    <option value="Role-Playing">Role-Playing</option>
+                                    <option value="Puzzle">Puzzle</option>
+                                    <option value="Misc">Misc</option>
+                                    <option value="Shooter">Shooter</option>
+                                    <option value="Simulation">Simulation</option>
+                                    <option value="Action">Action</option>
+                                    <option value="Fighting">Fighting</option>
+                                    <option value="Adventure">Adventure</option>
+                                    <option value="Strategy">Strategy</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
-
-
+                    <div class = "text-end">
+                        <a id="clearButton" href="#" class="text-secondary small" style="opacity: 0.5;">Clear</a>
+                    </div>                    
 
                 </div>
                 <div class="card-body">
@@ -243,9 +246,19 @@
             ranking.addEventListener('change', handleDropdownChange);
             platform.addEventListener('change', handleDropdownChange);
             genre.addEventListener('change', handleDropdownChange);
-            searchForm.addEventListener('submit', handleDropdownChange);            
-        
+            searchForm.addEventListener('submit', handleDropdownChange);   
             
+
+
+            const clearButton = document.getElementById('clearButton');
+
+            clearButton.addEventListener('click', function(event) {
+                event.preventDefault(); // Prevent the link from navigating
+
+                location.reload();
+            });
+        
+        /*    
         function load_data(gameSearch) {
             const request = new XMLHttpRequest();
             request.open('GET', '/get_games?search=' + gameSearch, true);
@@ -274,6 +287,7 @@
 
             request.send();
         }
+        */
         
 
         function confirmLogout() {
