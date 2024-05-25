@@ -220,6 +220,25 @@ app.post('/gameadd', (req, res) => {
     });
 });
 
+app.post("/edit_game", (request, response) => {
+    const { gameId, name, year, platform, publisher, genre } = request.body;
+
+    const sql = `UPDATE games AS g
+                 JOIN publishers AS p ON g.publisher_id = p.publisher_id
+                 JOIN genres AS g2 ON g.genre_id = g2.genre_id
+                 SET g.name = ?, g.year = ?, g.platform = ?, p.publisher_name = ?, g2.genre_name = ?
+                 WHERE g.game_id = ?`;
+
+    pool.query(sql, [name, year, platform, publisher, genre, gameId], (error, results) => {
+        if (error) {
+            console.error("Error updating game details:", error);
+            response.status(500).json({ message: "Failed to update game details" });
+        } else {
+            response.status(200).json({ message: "Game details updated successfully" });
+        }
+    });
+});
+
 // Route to get games based on search
 app.get("/get_games", (request, response) => {
     const sql = "SELECT games.*, genres.genre_name FROM games JOIN genres ON games.genre_id = genres.genre_id WHERE games.name LIKE '%" + request.query.search + "%'";
