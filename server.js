@@ -324,19 +324,6 @@ app.post("/add_review", (request, response) => {
 
 
 
-app.delete('/delete_game/:gameId', (req, res) => {
-    const gameId = req.params.gameId;
-    const sql = 'DELETE FROM games WHERE game_id = ?';
-    connection.query(sql, [gameId], (error) => {
-        if (error) {
-            console.error('Error deleting game:', error);
-            res.status(500).send('Error deleting game');
-        } else {
-            console.log('Game deleted successfully');
-            res.status(200).send('Game deleted successfully yay');
-        }
-    });
-});
 
 
 // POST route to remove a review
@@ -345,10 +332,7 @@ app.post('/delete_review', async (req, res) => {
     const reviewId = req.body.reviewId;
     const username = req.session.username;
    const review_username=req.body.reviewUsername;
-    console.log(reviewId);
-    console.log(review_username);
 
-    console.log(username);
 
     try {
         if (username==review_username){
