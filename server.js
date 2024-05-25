@@ -254,6 +254,7 @@ app.get('/get_games_f', (req, res) => {
     const filter = req.query.filter;
     const platform = req.query.platform;
     const genre = req.query.genre;
+    const search = req.query.search;
 
     let query = 'SELECT games.*, genres.genre_name FROM games JOIN genres ON games.genre_id = genres.genre_id WHERE 1=1';
     
@@ -262,6 +263,9 @@ app.get('/get_games_f', (req, res) => {
     }
     if (genre !== 'ALL') {
         query += ` AND genres.genre_name = '${genre}'`;
+    }
+    if (search) {
+        query += ` AND games.name LIKE '%${search}%'`;
     }
     if (filter === 'top10') {
         query += ' ORDER BY games.game_id LIMIT 10';

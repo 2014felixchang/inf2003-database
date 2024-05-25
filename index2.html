@@ -103,7 +103,7 @@
     <div class="container-fluid mt-5">
         <h1 class="text-danger text-center"><b>Gamepedia</b></h1>
         <form id="searchForm" class="text-center"
-            onsubmit="event.preventDefault(); load_data(document.getElementById('search').value);">
+            onsubmit="event.preventDefault(); //load_data(document.getElementById('search').value);">
             <div class="mb-3 mt-5">
                 <input type="text" class="form-control" id="search" placeholder="Enter a game" required>
             </div>
@@ -208,10 +208,12 @@
             const platform = document.getElementById('platform');
             const genre = document.getElementById('genre');
             const results_body = document.querySelector('#results');
+            const search = document.getElementById('search');
+            const searchForm = document.getElementById('searchForm');
 
-            function load_values(ranking_value, platform_value, genre_value){
+            function load_values(ranking_value, platform_value, genre_value, search_value){
                 const request = new XMLHttpRequest();
-                request.open('GET', '/get_games_f?filter=' + ranking_value +'&platform=' + platform_value + '&genre=' + genre_value, true);
+                request.open('GET', '/get_games_f?filter=' + ranking_value +'&platform=' + platform_value + '&genre=' + genre_value + '&search=' + search_value, true);
                 request.onreadystatechange = () => {
                     if (request.readyState === XMLHttpRequest.DONE && request.status === 200) {
                         const results = JSON.parse(request.responseText);
@@ -232,19 +234,18 @@
                 };
                 request.send();
             }
+
+
             function handleDropdownChange(){
-                load_values(ranking.value, platform.value, genre.value);
+                load_values(ranking.value, platform.value, genre.value, search.value);
             }
 
             ranking.addEventListener('change', handleDropdownChange);
             platform.addEventListener('change', handleDropdownChange);
             genre.addEventListener('change', handleDropdownChange);
+            searchForm.addEventListener('submit', handleDropdownChange);            
         
-    
-
-
-        //const results_body = document.querySelector('#results');
-
+            
         function load_data(gameSearch) {
             const request = new XMLHttpRequest();
             request.open('GET', '/get_games?search=' + gameSearch, true);
@@ -273,6 +274,7 @@
 
             request.send();
         }
+        
 
         function confirmLogout() {
             if (confirm('Are you sure you want to logout?')) {
