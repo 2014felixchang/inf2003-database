@@ -88,12 +88,11 @@
             <a class="navbar-brand" href="#" id="gamepediaLink">
                 <img src="/logo.jpg" alt="Gamepedia Logo">
             </a>
-            <button class="btn btn-danger" onclick="confirmLogout()">Logout</button>
         </div>
     </nav>
 
     <div class="container-fluid mt-5">
-        <button class="btn btn-secondary mb-3" onclick="history.back()">Back</button>
+        <button class="btn btn-secondary mb-3" onclick="window.location.href='/gamedelete';">Back</button>
         <div class="card">
             <div class="card-header">Game Details</div>
             <div class="card-body" id="results">
@@ -166,26 +165,7 @@
             results_body.innerHTML = html;
         }
 
-        function confirmLogout() {
-            if (confirm('Are you sure you want to logout?')) {
-                const request = new XMLHttpRequest();
-                request.open('POST', '/logout', true);
-                request.setRequestHeader('Content-Type', 'application/json');
-
-                request.onreadystatechange = () => {
-                    if (request.readyState === XMLHttpRequest.DONE && request.status === 200) {
-                        const response = JSON.parse(request.responseText);
-                        alert(response.message);
-                        if (response.success) {
-                            window.location.href = '/';
-                        }
-                    }
-                };
-
-                const data = JSON.stringify({});
-                request.send(data);
-            }
-        }
+       
 
         function editField(fieldName) {
             const fieldSpan = document.getElementById(fieldName);
@@ -197,26 +177,44 @@
             }
         }
 
+
+
         function saveChanges() {
-            fetch(`/update_game/${gameId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(gameDetails)
-            })
-                .then(response => {
-                    if (response.ok) {
-                        alert('Changes saved successfully!');
-                    } else {
-                        alert('Failed to save changes.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error saving changes:', error);
-                    alert('Failed to save changes. Please try again later.');
-                });
+    const name = document.getElementById('name').innerText;
+    const year = document.getElementById('released').innerText;
+    const platform = document.getElementById('platform').innerText;
+    const publisher = document.getElementById('publisher').innerText;
+    const genre = document.getElementById('genre').innerText;
+
+    const updatedDetails = {
+        gameId: gameId,
+        name: name,
+        year: year,
+        platform: platform,
+        publisher: publisher,
+        genre: genre
+    };
+
+    fetch('/edit_game', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updatedDetails)
+    })
+    .then(response => {
+        if (response.ok) {
+            alert('Changes saved successfully!');
+        } else {
+            alert('Failed to save changes.');
         }
+    })
+    .catch(error => {
+        console.error('Error saving changes:', error);
+        alert('Failed to save changes. Please try again later.');
+    });
+}
+
 
         open_game(gameId);
     </script>
