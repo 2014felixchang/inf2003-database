@@ -193,7 +193,8 @@
                         <div class="card mb-3">
     <div class="card-header d-flex justify-content-between">
         <strong style="font-size: large;">${review.rating} / 5</strong>
-        <button class="btn btn-danger delete-btn" onclick="deleteReview(${review.review_id})">Delete</button>
+        <button class="btn btn-danger delete-btn" onclick="deleteReview(${review.review_id}, '${review.username}')">Delete</button>
+
     </div>
     <div class="card-body">
         <blockquote class="blockquote mb-0">
@@ -234,7 +235,7 @@
             }
         }
 
-        function deleteReview(reviewId) {
+        function deleteReview(reviewId,reviewusername) {
     const confirmation = confirm("Are you sure you want to delete this review?");
     
     if (confirmation) {
@@ -244,11 +245,21 @@
 
         request.onreadystatechange = () => {
             if (request.readyState === XMLHttpRequest.DONE) {
-                load_reviews(gameId);
-            }
+        if (request.status === 200) {
+            const res = JSON.parse(request.responseText);
+            load_reviews(gameId);
+            alert(res.message);
+        } else {
+            console.error('Error:', request.status); // Log the error status
+            alert('Failed to delete review. Please try again.'); // Show a generic error message
+        }
+    }
         };
 
-        const data = JSON.stringify({ reviewId: reviewId });
+       //const data = JSON.stringify({ reviewId: reviewId});
+       const data = JSON.stringify({ reviewId: reviewId, reviewUsername: reviewusername });
+      
+
         request.send(data);
     }
 }
