@@ -322,20 +322,6 @@ app.post("/add_review", (request, response) => {
     });
 });
 
-app.delete('/delete_game/:gameId', (req, res) => {
-    const gameId = req.params.gameId;
-    const sql = 'DELETE FROM games WHERE game_id = ?';
-    connection.query(sql, [gameId], (error) => {
-        if (error) {
-            console.error('Error deleting game:', error);
-            res.status(500).send('Error deleting game');
-        } else {
-            console.log('Game deleted successfully');
-            res.status(200).send('Game deleted successfully yay');
-        }
-    });
-});
-
 
 
 
@@ -360,6 +346,21 @@ app.post('/delete_review', async (req, res) => {
 
           
         
+    
+    } catch (error) {
+        console.error('Error deleting review:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+
+app.post('/delete_game', async (req, res) => {
+    const gameId = req.body.gameId; 
+
+    try {
+          
+        const result = await pool.query('DELETE FROM games WHERE game_id = ?', [gameId]);
+        res.status(200).json({ message: 'Game deleted successfully' });
     
     } catch (error) {
         console.error('Error deleting review:', error);
