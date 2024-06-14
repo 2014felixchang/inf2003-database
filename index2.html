@@ -27,6 +27,7 @@
             padding: 5px;
             font-size: 16px;
         }
+
         body {
             background-color: #f8f9fa;
             font-family: 'Arial', sans-serif;
@@ -128,55 +129,14 @@
                                 <label for="platform" class="me-2">Platform:</label>
                                 <select id="platform" class="form-select mx-3">
                                     <option value="ALL">All</option>
-                                    <option value="NES">NES</option>
-                                    <option value="Wii">Wii</option>
-                                    <option value="GB">GB</option>
-                                    <option value="DS">DS</option>
-                                    <option value="X360">X360</option>
-                                    <option value="PS3">PS3</option>
-                                    <option value="PS2">PS2</option>
-                                    <option value="SNES">SNES</option>
-                                    <option value="GBA">GBA</option>
-                                    <option value="3DS">3DS</option>
-                                    <option value="PS4">PS4</option>
-                                    <option value="N64">N64</option>
-                                    <option value="PS">PS</option>
-                                    <option value="XB">XB</option>
-                                    <option value="PC">PC</option>
-                                    <option value="2600">2600</option>
-                                    <option value="PSP">PSP</option>
-                                    <option value="XOne">XOne</option>
-                                    <option value="GC">GC</option>
-                                    <option value="WiiU">WiiU</option>
-                                    <option value="GEN">GEN</option>
-                                    <option value="DC">DC</option>
-                                    <option value="PSV">PSV</option>
-                                    <option value="SAT">SAT</option>
-                                    <option value="SCD">SCD</option>
-                                    <option value="WS">WS</option>
-                                    <option value="NG">NG</option>
-                                    <option value="TG16">TG16</option>
-                                    <option value="3DO">3DO</option>
-                                    <option value="GG">GG</option>
-                                    <option value="PCFX">PCFX</option>
+                                    <!-- Options will be dynamically populated -->
                                 </select>
                             </div>
                             <div class="dropdown-container d-flex align-items-center">
                                 <label for="genre" class="me-2">Genre:</label>
                                 <select id="genre" class="form-select mx-3">
                                     <option value="ALL">All</option>
-                                    <option value="Sports">Sports</option>
-                                    <option value="Platform">Platform</option>
-                                    <option value="Racing">Racing</option>
-                                    <option value="Role-Playing">Role-Playing</option>
-                                    <option value="Puzzle">Puzzle</option>
-                                    <option value="Misc">Misc</option>
-                                    <option value="Shooter">Shooter</option>
-                                    <option value="Simulation">Simulation</option>
-                                    <option value="Action">Action</option>
-                                    <option value="Fighting">Fighting</option>
-                                    <option value="Adventure">Adventure</option>
-                                    <option value="Strategy">Strategy</option>
+                                    <!-- Options will be dynamically populated -->
                                 </select>
                             </div>
                         </div>
@@ -207,72 +167,60 @@
     </div>
 
     <script>
-            const ranking = document.getElementById('ranking'); 
-            const platform = document.getElementById('platform');
-            const genre = document.getElementById('genre');
-            const results_body = document.querySelector('#results');
-            const search = document.getElementById('search');
-            const searchForm = document.getElementById('searchForm');
+        document.addEventListener("DOMContentLoaded", function () {
+            const platformDropdown = document.getElementById("platform");
+            const genreDropdown = document.getElementById("genre");
 
-            function load_values(ranking_value, platform_value, genre_value, search_value){
-                const request = new XMLHttpRequest();
-                request.open('GET', '/get_games_f?filter=' + ranking_value +'&platform=' + platform_value + '&genre=' + genre_value + '&search=' + search_value, true);
-                request.onreadystatechange = () => {
-                    if (request.readyState === XMLHttpRequest.DONE && request.status === 200) {
-                        const results = JSON.parse(request.responseText);
-                        let html = '';
-                        results.forEach(result => {
-                            html += `
-                            <tr>
-                                <!-- <td>${result.game_id}</td> -->
-                                <td><a href="/game_info?gameid=${result.game_id}" >${result.name}</a></td>
-                                <td>${result.year}</td>
-                                <td>${result.platform}</td>
-                                <td>${result.genre_name}</td>
-                            </tr>
-                            `;
-                        });
-                        results_body.innerHTML = html;
-                    }
-                };
-                request.send();
-            }
+            // Fetch platforms from the server and populate the platform dropdown
+            fetch("/get_platforms")
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(platform => {
+                        const option = document.createElement("option");
+                        option.value = platform;
+                        option.textContent = platform;
+                        platformDropdown.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching platforms:', error);
+                });
 
+            // Fetch genres from the server and populate the genre dropdown
+            // Fetch genres from the server and populate the genre dropdown
+            fetch("/get_genres")
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(genre => {
+                        const option = document.createElement("option");
+                        option.value = genre.genre_name;  
+                        option.textContent = genre.genre_name;
+                        genreDropdown.appendChild(option);
+                    });
+    })
+    .catch(error => {
+        console.error('Error fetching genres:', error);
+    });
 
-            function handleDropdownChange(){
-                load_values(ranking.value, platform.value, genre.value, search.value);
-            }
+        });
 
-            ranking.addEventListener('change', handleDropdownChange);
-            platform.addEventListener('change', handleDropdownChange);
-            genre.addEventListener('change', handleDropdownChange);
-            searchForm.addEventListener('submit', handleDropdownChange);   
-            
+        const ranking = document.getElementById('ranking'); 
+        const platform = document.getElementById('platform');
+        const genre = document.getElementById('genre');
+        const results_body = document.querySelector('#results');
+        const search = document.getElementById('search');
+        const searchForm = document.getElementById('searchForm');
 
-
-            const clearButton = document.getElementById('clearButton');
-
-            clearButton.addEventListener('click', function(event) {
-                event.preventDefault(); // Prevent the link from navigating
-
-                location.reload();
-            });
-        
-        /*    
-        function load_data(gameSearch) {
+        function load_values(ranking_value, platform_value, genre_value, search_value){
             const request = new XMLHttpRequest();
-            request.open('GET', '/get_games?search=' + gameSearch, true);
-
-            let html = '';
-
+            request.open('GET', '/get_games_f?filter=' + ranking_value +'&platform=' + platform_value + '&genre=' + genre_value + '&search=' + search_value, true);
             request.onreadystatechange = () => {
                 if (request.readyState === XMLHttpRequest.DONE && request.status === 200) {
                     const results = JSON.parse(request.responseText);
-
+                    let html = '';
                     results.forEach(result => {
                         html += `
                         <tr>
-                            <!-- <td>${result.game_id}</td> -->
                             <td><a href="/game_info?gameid=${result.game_id}" >${result.name}</a></td>
                             <td>${result.year}</td>
                             <td>${result.platform}</td>
@@ -280,15 +228,27 @@
                         </tr>
                         `;
                     });
-
                     results_body.innerHTML = html;
                 }
             };
-
             request.send();
         }
-        */
-        
+
+        function handleDropdownChange(){
+            load_values(ranking.value, platform.value, genre.value, search.value);
+        }
+
+        ranking.addEventListener('change', handleDropdownChange);
+        platform.addEventListener('change', handleDropdownChange);
+        genre.addEventListener('change', handleDropdownChange);
+        searchForm.addEventListener('submit', handleDropdownChange);   
+
+        const clearButton = document.getElementById('clearButton');
+
+        clearButton.addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent the link from navigating
+            location.reload();
+        });
 
         function confirmLogout() {
             if (confirm('Are you sure you want to logout?')) {
