@@ -443,15 +443,15 @@ app.post('/delete_game', async (req, res) => {
     const gameId = req.body.gameId;
 
     try {
-        // Use a multi-statement query to delete reviews first and then the game
-        const query = `
-            DELETE reviews, games FROM reviews
-            JOIN games ON reviews.game_id = games.game_id
+        // Delete the game and associated reviews
+        const deleteQuery = `
+            DELETE games, reviews FROM games
+            LEFT JOIN reviews ON games.game_id = reviews.game_id
             WHERE games.game_id = ?;
         `;
+        await pool.query(deleteQuery, [gameId]);
 
-        const result = await pool.query(query, [gameId]);
-        res.status(200).json({ message: 'Game and associated reviews deleted successfully' });
+        res.status(200).json({ message: 'Deleted successfully' });
     } catch (error) {
         console.error('Error deleting game and reviews:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -459,8 +459,10 @@ app.post('/delete_game', async (req, res) => {
 });
 
 
+
+
+
 // Start the server
 app.listen(8080, () => {
     console.log('Server listening on port 8080');
 });
-
