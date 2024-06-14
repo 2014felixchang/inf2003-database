@@ -321,7 +321,7 @@ app.post("/edit_game", (request, response) => {
 
 // Route to get games based on search
 app.get("/get_games", (request, response) => {
-    const sql = "SELECT games.*, genres.genre_name FROM games JOIN genres ON games.genre_id = genres.genre_id WHERE games.name LIKE '%" + request.query.search + "%'";
+    const sql = "SELECT games.*, genres.genre_name FROM games JOIN genres ON games.genre_id = genres.genre_id WHERE games.name LIKE '%" + request.query.search + "%'";;
     request.logQuery(sql); // Logging the SQL query
     pool.query(sql, (error, results) => {
         if (error) {
@@ -406,22 +406,15 @@ app.get("/get_reviews", (request, response) => {
 app.post("/add_review", (request, response) => {
     const { game_id, rating, comment } = request.body;
     const user_id = request.session.user_id; // assuming user_id is stored in session after login
-
     // Convert current time to Singapore time
     const currentUTC = new Date();
     const singaporeOffset = 8 * 60; // Singapore is UTC+8
     const singaporeTime = new Date(currentUTC.getTime() + (singaporeOffset * 60 * 1000));
     const date = singaporeTime.toISOString().split('T')[0]; // get current date in YYYY-MM-DD format
-
     const sql = "INSERT INTO reviews (user_id, game_id, rating, comment, date) VALUES (?, ?, ?, ?, ?)";
-    request.logQuery(sql, [user_id, game_id, rating, comment, date]); // Logging the SQL query
     pool.query(sql, [user_id, game_id, rating, comment, date], (error, results) => {
-        if (error) {
-            console.error('Error adding review:', error);
-            response.status(500).json({ success: false, message: 'Failed to add review' });
-        } else {
-            response.json({ success: true, message: 'Review added successfully' });
-        }
+        if (error) throw error;
+        response.json({ success: true, message: 'Review added successfully' });
     });
 });
 
@@ -434,7 +427,6 @@ app.post('/delete_review', async (req, res) => {
 
     try {
         if (isAdmin || username === reviewUsername) {
-            // If the user is an admin or the review belongs to the user, delete the review
             const result = await pool.query('DELETE FROM reviews WHERE review_id = ?', [reviewId]);
             res.status(200).json({ message: 'Review deleted successfully' });
         } else {
@@ -451,13 +443,21 @@ app.post('/delete_game', async (req, res) => {
     const gameId = req.body.gameId;
 
     try {
-        const result = await pool.query('DELETE FROM games WHERE game_id = ?', [gameId]);
-        res.status(200).json({ message: 'Game deleted successfully' });
+        // Use a multi-statement query to delete reviews first and then the game
+        const query = `
+            DELETE reviews, games FROM reviews
+            JOIN games ON reviews.game_id = games.game_id
+            WHERE games.game_id = ?;
+        `;
+
+        const result = await pool.query(query, [gameId]);
+        res.status(200).json({ message: 'Game and associated reviews deleted successfully' });
     } catch (error) {
-        console.error('Error deleting game:', error);
+        console.error('Error deleting game and reviews:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 });
+
 
 // Start the server
 app.listen(8080, () => {
