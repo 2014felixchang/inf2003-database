@@ -71,37 +71,38 @@
             </div>
         </div>
     </div>
+
     <script>
         document.getElementById('adminLoginForm').addEventListener('submit', function(event) {
             event.preventDefault();
 
             const username = document.getElementById('loginUsername').value;
             const password = document.getElementById('loginPassword').value;
-            const loginMessage = document.getElementById('loginMessage');
 
-            // Default username and password for admin
-            const defaultUsername = "admin";
-            const defaultPassword = "admin";
+            fetch('/admin-login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const loginMessage = document.getElementById('loginMessage');
+                if (data.success) {
+                    loginMessage.className = 'alert alert-success';
+                    loginMessage.textContent = 'Admin authorized! Redirecting...';
+                    loginMessage.style.display = 'block';
 
-            console.log(`Username: ${username}, Password: ${password}`);
-
-            if (username === defaultUsername && password === defaultPassword) {
-                console.log('Admin authorized');
-                // Display success message
-                loginMessage.className = 'alert alert-success';
-                loginMessage.textContent = 'Admin authorized! Redirecting...';
-                loginMessage.style.display = 'block';
-
-                // Redirect to admin dashboard after a short delay
-                setTimeout(() => {
-                    window.location.href = '/admindash';
-                }, 2000);
-            } else {
-                console.log('Invalid username or password');
-                loginMessage.className = 'alert alert-danger';
-                loginMessage.textContent = 'Invalid username or password. Please try again.';
-                loginMessage.style.display = 'block';
-            }
+                    setTimeout(() => {
+                        window.location.href = '/admindash';
+                    }, 2000);
+                } else {
+                    loginMessage.className = 'alert alert-danger';
+                    loginMessage.textContent = 'Invalid username or password. Please try again.';
+                    loginMessage.style.display = 'block';
+                }
+            });
         });
     </script>
 </body>
