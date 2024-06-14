@@ -79,6 +79,10 @@
         tr {
             border-style: hidden;
         }
+
+        select {
+            overflow: auto;
+        }
     </style>
 </head>
 
@@ -131,7 +135,7 @@
             details.forEach(result => {
                 html += `
                     <table class="table">
-                        <tbody >
+                        <tbody>
                             <tr>
                                 <td class="td-label"><h4>Name: </h4></td>
                                 <td><h4><span id="name">${result.name}</span></h4></td>
@@ -144,18 +148,30 @@
                             </tr>
                             <tr>
                                 <td class="td-label"><h4>Platform: </h4></td>
-                                <td><h4><span id="platform">${result.platform}</span></h4></td>
-                                <td><button class="btn btn-primary" onclick="editField('platform')">Edit</button></td>
+                                <td>
+                                    <input type="text" id="platformText" class="form-control mb-2" value="${result.platform}" readonly>
+                                    <select class="form-select" id="platformSelect" size="5">
+                                        <option value="${result.platform}" selected>${result.platform}</option>
+                                    </select>
+                                </td>
                             </tr>
                             <tr>
                                 <td class="td-label"><h4>Publisher: </h4></td>
-                                <td><h4><span id="publisher">${result.publisher}</span></h4></td>
-                                <td><button class="btn btn-primary" onclick="editField('publisher')">Edit</button></td>
+                                <td>
+                                    <input type="text" id="publisherText" class="form-control mb-2" value="${result.publisher}" readonly>
+                                    <select class="form-select" id="publisherSelect" size="5">
+                                        <option value="${result.publisher_id}" selected>${result.publisher}</option>
+                                    </select>
+                                </td>
                             </tr>
                             <tr>
                                 <td class="td-label"><h4>Genre: </h4></td>
-                                <td><h4><span id="genre">${result.genre}</span></h4></td>
-                                <td><button class="btn btn-primary" onclick="editField('genre')">Edit</button></td>
+                                <td>
+                                    <input type="text" id="genreText" class="form-control mb-2" value="${result.genre}" readonly>
+                                    <select class="form-select" id="genreSelect" size="5">
+                                        <option value="${result.genre_id}" selected>${result.genre}</option>
+                                    </select>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -163,9 +179,72 @@
             });
 
             results_body.innerHTML = html;
+            populateDropdown('/get_publishers', 'publisherSelect', 'publisher_id', 'publisher_name');
+            populateDropdown('/get_genres', 'genreSelect', 'genre_id', 'genre_name');
+            populateplatform('/get_platforms', 'platformSelect');
+
+            // Add event listeners to update textboxes when dropdown changes
+            document.getElementById('publisherSelect').addEventListener('change', updatePublisherText);
+            document.getElementById('genreSelect').addEventListener('change', updateGenreText);
+            document.getElementById('platformSelect').addEventListener('change', updatePlatformText); // Add platform event listener
         }
 
-       
+        function populateplatform(endpoint, dropdownId) {
+            fetch(endpoint)
+                .then(response => response.json())
+                .then(data => {
+                    const dropdown = document.getElementById(dropdownId);
+                    dropdown.innerHTML = ''; // Clear existing options
+                    data.forEach(platform => {
+                        const option = document.createElement("option");
+                        option.value = platform; // Use platform name as value
+                        option.textContent = platform; // Display platform name in dropdown
+                        dropdown.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error(`Error fetching ${dropdownId}:`, error);
+                });
+        }
+
+        function populateDropdown(endpoint, dropdownId, valueKey, textKey) {
+            fetch(endpoint)
+                .then(response => response.json())
+                .then(data => {
+                    const dropdown = document.getElementById(dropdownId);
+                    dropdown.innerHTML = ''; // Clear existing options
+                    data.forEach(item => {
+                        const option = document.createElement("option");
+                        option.value = item[valueKey];
+                        option.textContent = item[textKey];
+                        dropdown.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error(`Error fetching ${dropdownId}:`, error);
+                });
+        }
+
+        function updatePublisherText() {
+            const select = document.getElementById('publisherSelect');
+            const textBox = document.getElementById('publisherText');
+            const selectedIndex = select.selectedIndex;
+            textBox.value = select.options[selectedIndex].text; // Display name in textbox
+        }
+
+        function updateGenreText() {
+            const select = document.getElementById('genreSelect');
+            const textBox = document.getElementById('genreText');
+            const selectedIndex = select.selectedIndex;
+            textBox.value = select.options[selectedIndex].text; // Display name in textbox
+        }
+
+        function updatePlatformText() {
+            const select = document.getElementById('platformSelect');
+            const textBox = document.getElementById('platformText');
+            const selectedIndex = select.selectedIndex;
+            textBox.value = select.options[selectedIndex].text; // Display name in textbox
+        }
 
         function editField(fieldName) {
             const fieldSpan = document.getElementById(fieldName);
@@ -177,44 +256,56 @@
             }
         }
 
-
-
         function saveChanges() {
-    const name = document.getElementById('name').innerText;
-    const year = document.getElementById('released').innerText;
-    const platform = document.getElementById('platform').innerText;
-    const publisher = document.getElementById('publisher').innerText;
-    const genre = document.getElementById('genre').innerText;
+            const name = document.getElementById('name').innerText;
+            const year = document.getElementById('released').innerText;
+            const platformText = document.getElementById('platformText').value;
+            const publisherText = document.getElementById('publisherText').value;
+            const genreText = document.getElementById('genreText').value;
+            const platformId = document.getElementById('platformSelect').value || document.getElementById('platformSelect').options[0].value; // Use default if not changed
+            const publisherId = document.getElementById('publisherSelect').value || document.getElementById('publisherSelect').options[0].value; // Use default if not changed
+            const genreId = document.getElementById('genreSelect').value || document.getElementById('genreSelect').options[0].value; // Use default if not changed
 
-    const updatedDetails = {
-        gameId: gameId,
-        name: name,
-        year: year,
-        platform: platform,
-        publisher: publisher,
-        genre: genre
-    };
+            const updatedDetails = {
+                gameId: gameId,
+                name: name,
+                year: year,
+                platform_Name: platformText,
+                platform_id: platformId,
+                publisher_Name: publisherText,
+                publisher_id: publisherId,
+                genre_Name: genreText,
+                genre_id: genreId
+            };
 
-    fetch('/edit_game', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(updatedDetails)
-    })
-    .then(response => {
-        if (response.ok) {
-            alert('Changes saved successfully!');
-        } else {
-            alert('Failed to save changes.');
+            console.log('Name:', name);
+            console.log('Released:', year);
+            console.log('Platform Text:', platformText);
+            console.log('Platform ID:', platformId);
+            console.log('Publisher Text:', publisherText);
+            console.log('Publisher ID:', publisherId);
+            console.log('Genre Text:', genreText);
+            console.log('Genre ID:', genreId);
+
+            fetch('/edit_game', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updatedDetails)
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Changes saved successfully!');
+                } else {
+                    alert('Failed to save changes.');
+                }
+            })
+            .catch(error => {
+                console.error('Error saving changes:', error);
+                alert('Failed to save changes. Please try again later.');
+            });
         }
-    })
-    .catch(error => {
-        console.error('Error saving changes:', error);
-        alert('Failed to save changes. Please try again later.');
-    });
-}
-
 
         open_game(gameId);
     </script>
