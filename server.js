@@ -70,26 +70,25 @@ app.get("/admin", (request, response) => {
 });
 
 // Serve as admin dashboard
-app.get("/admindash", (request, response) => {
-    response.sendFile(__dirname + "/admindash.html");
+app.get("/admindash", isAdmin, (req, res) => {
+    res.sendFile(__dirname + "/admindash.html");
 });
 
-app.get("/gameadd", (request, response) => {
-    response.sendFile(__dirname + "/add_game.html");
+app.get("/gameadd", isAdmin, (req, res) => {
+    res.sendFile(__dirname + "/add_game.html");
 });
 
-app.get("/gamedelete", (request, response) => {
-    response.sendFile(__dirname + "/delete_game.html");
+app.get("/gamedelete", isAdmin, (req, res) => {
+    res.sendFile(__dirname + "/delete_game.html");
+});
+
+app.get("/modify", isAdmin, (req, res) => {
+    res.sendFile(__dirname + "/modify_game.html");
 });
 
 // Serve as game info page
 app.get("/game_info", (request, response) => {
     response.sendFile(__dirname + "/game_info.html");
-});
-
-// Serve as modification of game
-app.get("/modify", (request, response) => {
-    response.sendFile(__dirname + "/modify_game.html");
 });
 
 // Serve index page
@@ -186,6 +185,31 @@ app.post('/login', (req, res) => {
     });
 });
 
+// Admin Login Route
+app.post('/admin-login', (req, res) => {
+    const { username, password } = req.body;
+
+    const adminUsername = 'admin'; // Default admin username
+    const adminPassword = 'admin'; // Default admin password
+
+    if (username === adminUsername && password === adminPassword) {
+        req.session.loggedin = true;
+        req.session.isAdmin = true; // Mark session as admin
+        res.json({ success: true, message: 'Admin login successful' });
+    } else {
+        res.json({ success: false, message: 'Invalid username or password' });
+    }
+});
+
+
+function isAdmin(req, res, next) {
+    if (req.session.loggedin && req.session.isAdmin) {
+        next(); // Proceed to the next middleware or route handler
+    } else {
+        res.redirect('/admin');
+    }
+}
+
 // Logout Route
 app.post('/logout', (req, res) => {
     console.log('Logout request received');
@@ -220,16 +244,16 @@ app.post('/gameadd', (req, res) => {
     });
 });
 
+// POST route to edit game details
 app.post("/edit_game", (request, response) => {
-    const { gameId, name, year, platform, publisher, genre } = request.body;
+    const { gameId, name, year, platform_Name, publisher_id, genre_id } = request.body;
 
-    const sql = `UPDATE games AS g
-                 JOIN publishers AS p ON g.publisher_id = p.publisher_id
-                 JOIN genres AS g2 ON g.genre_id = g2.genre_id
-                 SET g.name = ?, g.year = ?, g.platform = ?, p.publisher_name = ?, g2.genre_name = ?
-                 WHERE g.game_id = ?`;
+    // Update games table with the platform name and other details
+    const sql = `UPDATE games
+                 SET name = ?, year = ?, platform = ?, publisher_id = ?, genre_id = ?
+                 WHERE game_id = ?`;
 
-    pool.query(sql, [name, year, platform, publisher, genre, gameId], (error, results) => {
+    pool.query(sql, [name, year, platform_Name, publisher_id, genre_id, gameId], (error, results) => {
         if (error) {
             console.error("Error updating game details:", error);
             response.status(500).json({ message: "Failed to update game details" });
@@ -238,6 +262,10 @@ app.post("/edit_game", (request, response) => {
         }
     });
 });
+
+
+
+
 
 // Route to get games based on search
 app.get("/get_games", (request, response) => {
@@ -332,30 +360,25 @@ app.post("/add_review", (request, response) => {
 
 // POST route to remove a review
 app.post('/delete_review', async (req, res) => {
-    //const requestData = JSON.parse(req.body);
     const reviewId = req.body.reviewId;
     const username = req.session.username;
-   const review_username=req.body.reviewUsername;
-
+    const reviewUsername = req.body.reviewUsername;
+    const isAdmin = req.session.isAdmin; // Check if the user is an admin
 
     try {
-        if (username==review_username){
-        const result = await pool.query('DELETE FROM reviews WHERE review_id = ? AND user_id = (SELECT id FROM users WHERE username = ?)', [reviewId, username]);
-        res.status(200).json({ message: 'Review deleted successfully' });
+        if (isAdmin || username === reviewUsername) {
+            // If the user is an admin or the review belongs to the user, delete the review
+            const result = await pool.query('DELETE FROM reviews WHERE review_id = ?', [reviewId]);
+            res.status(200).json({ message: 'Review deleted successfully' });
+        } else {
+            res.status(403).json({ message: 'You have no rights to delete this review' });
         }
-        else{
-        res.status(200).json({ message: 'You have no rights to delete' });
-        }
-
-
-          
-        
-    
     } catch (error) {
         console.error('Error deleting review:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 });
+
 
 
 app.post('/delete_game', async (req, res) => {
