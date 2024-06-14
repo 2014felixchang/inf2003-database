@@ -287,19 +287,49 @@ app.get('/check-login-status', (req, res) => {
 });
 
 // Route to add game details
-app.post('/gameadd', (req, res) => {
+app.post('/gameadd', isAdmin, (req, res) => {
     const { name, year, platform, publisher, genre, na_sales, eu_sales, jp_sales, other_sales } = req.body;
 
-    const sql = 'INSERT INTO games (name, year, platform, publisher_id, genre_id, na_sales, eu_sales, jp_sales, other_sales, global_sales) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-    req.logQuery(sql, [name, year, platform, publisher, genre, na_sales, eu_sales, jp_sales, other_sales, (parseFloat(na_sales) + parseFloat(eu_sales) + parseFloat(jp_sales) + parseFloat(other_sales))]); // Logging the SQL query
-    pool.query(sql, [name, year, platform, publisher, genre, na_sales, eu_sales, jp_sales, other_sales, (parseFloat(na_sales) + parseFloat(eu_sales) + parseFloat(jp_sales) + parseFloat(other_sales))], (error, results) => {
+    // Construct the SQL query to check for duplicates
+    const sqlCheckDuplicate = `
+        SELECT *
+        FROM games
+        WHERE name = ? AND year = ? AND platform = ? AND publisher_id = ? AND genre_id = ?
+          AND na_sales = ? AND eu_sales = ? AND jp_sales = ? AND other_sales = ?
+    `;
+
+    // Execute the query to check for duplicates
+    pool.query(sqlCheckDuplicate, [name, year, platform, publisher, genre, na_sales, eu_sales, jp_sales, other_sales], (error, results) => {
         if (error) {
-            console.error('Error adding game:', error);
+            console.error('Error checking duplicate game:', error);
             return res.json({ success: false, message: 'Failed to add game' });
         }
-        res.json({ success: true, message: 'Game added successfully' });
+
+        // If a game with the same details already exists, return an error
+        if (results.length > 0) {
+            return res.json({ success: false, message: 'A game with the same details already exists' });
+        }
+
+        // If no duplicate is found, proceed to insert the game into the database
+        const sqlInsertGame = `
+            INSERT INTO games (name, year, platform, publisher_id, genre_id, na_sales, eu_sales, jp_sales, other_sales, global_sales)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+
+        // Calculate global sales (sum of regional sales)
+        const global_sales = parseFloat(na_sales) + parseFloat(eu_sales) + parseFloat(jp_sales) + parseFloat(other_sales);
+
+        // Execute the insert query
+        pool.query(sqlInsertGame, [name, year, platform, publisher, genre, na_sales, eu_sales, jp_sales, other_sales, global_sales], (error, results) => {
+            if (error) {
+                console.error('Error adding game:', error);
+                return res.json({ success: false, message: 'Failed to add game' });
+            }
+            res.json({ success: true, message: 'Game added successfully' });
+        });
     });
 });
+
 
 // POST route to edit game details
 app.post("/edit_game", (request, response) => {
