@@ -1,15 +1,13 @@
-// Imports
 const express = require('express');
-const path = require('path'); 
+const path = require('path');
 const mysql = require('mysql');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 
-// Create an instance of the Express application
 const app = express();
 
-// Add middleware for parsing incoming request bodies
+// Middleware for parsing incoming request bodies
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
@@ -18,20 +16,19 @@ app.use(session({
     secret: 'secret-key',
     resave: false,
     saveUninitialized: false,
-    //cookie: { maxAge: 60000 } // 1-minute session
 }));
 
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Make MySQL Database Connection
-var pool = mysql.createPool({
-  connectionLimit: 10,
-  host: 'inf2003db-felixchang-67bf.g.aivencloud.com',
-  port: '26780',
-  user: 'web',
-  password: 'web',
-  database: 'test'
+// MySQL Database Connection
+const pool = mysql.createPool({
+    connectionLimit: 10,
+    host: 'inf2003db-felixchang-67bf.g.aivencloud.com',
+    port: '26780',
+    user: 'web',
+    password: 'web',
+    database: 'test'
 });
 
 // Check MySQL Database Connection
@@ -39,6 +36,37 @@ pool.getConnection((error) => {
     if (error) throw error;
     console.log('MySQL Database is connected successfully');
 });
+
+// Middleware to log SQL queries
+// Middleware to log SQL queries
+function logSqlQueries(req, res, next) {
+    req.queryLogs = []; // Initialize an empty array to store query logs
+
+    req.logQuery = (sql, values) => {
+        const start = process.hrtime();
+        pool.query(sql, values, (error, results) => {
+            const elapsed = process.hrtime(start)[1] / 1000000; // divide by a million to get milliseconds
+            const queryInfo = {
+                sql: sql,
+                values: values,
+                executionTime: elapsed.toFixed(2) + ' ms',
+                error: error ? error.message : null
+            };
+            req.queryLogs.push(queryInfo); // Store query info in request object
+            console.log('SQL Query:', queryInfo);
+            if (error) {
+                console.error('SQL Error:', error);
+            }
+        });
+    };
+    next();
+}
+
+
+// Adding the middleware to log SQL queries
+app.use(logSqlQueries);
+
+// Routes
 
 // Redirect to register page on first launch
 app.get("/", (request, response) => {
@@ -91,6 +119,18 @@ app.get("/game_info", (request, response) => {
     response.sendFile(__dirname + "/game_info.html");
 });
 
+
+
+
+// Endpoint to fetch SQL performance data
+// Endpoint to fetch SQL performance data
+app.get('/performance', (req, res) => {
+    const performanceData = req.queryLogs;
+    res.json(performanceData);
+});
+
+
+
 // Serve index page
 app.get("/index", (request, response) => {
     if (request.session.loggedin) {
@@ -103,6 +143,7 @@ app.get("/index", (request, response) => {
 // Route to get platforms
 app.get("/get_platforms", (req, res) => {
     const sql = "SELECT DISTINCT platform FROM games";
+    req.logQuery(sql); // Logging the SQL query
     pool.query(sql, (error, results) => {
         if (error) {
             console.error('Error fetching platforms:', error);
@@ -117,6 +158,7 @@ app.get("/get_platforms", (req, res) => {
 // Route to get publishers
 app.get("/get_publishers", (req, res) => {
     const sql = "SELECT * FROM publishers";
+    req.logQuery(sql); // Logging the SQL query
     pool.query(sql, (error, results) => {
         if (error) {
             console.error('Error fetching publishers:', error);
@@ -130,6 +172,7 @@ app.get("/get_publishers", (req, res) => {
 // Route to get genres
 app.get("/get_genres", (req, res) => {
     const sql = "SELECT * FROM genres";
+    req.logQuery(sql); // Logging the SQL query
     pool.query(sql, (error, results) => {
         if (error) {
             console.error('Error fetching genres:', error);
@@ -145,12 +188,17 @@ app.post('/register', (req, res) => {
     const { username, password } = req.body;
 
     bcrypt.hash(password, 10, (err, hash) => {
-        if (err) throw err;
+        if (err) {
+            console.error('Error hashing password:', err);
+            return res.status(500).json({ success: false, message: 'Registration failed' });
+        }
 
         const sql = 'INSERT INTO users (username, password) VALUES (?, ?)';
+        req.logQuery(sql, [username, hash]); // Logging the SQL query
         pool.query(sql, [username, hash], (error, results) => {
             if (error) {
-                return res.json({ success: false, message: 'Registration failed', error });
+                console.error('Error inserting user:', error);
+                return res.status(500).json({ success: false, message: 'Registration failed' });
             }
             res.json({ success: true, message: 'Registration successful' });
         });
@@ -162,8 +210,12 @@ app.post('/login', (req, res) => {
     const { username, password } = req.body;
 
     const sql = 'SELECT * FROM users WHERE username = ?';
+    req.logQuery(sql, [username]); // Logging the SQL query
     pool.query(sql, [username], (error, results) => {
-        if (error) throw error;
+        if (error) {
+            console.error('Error fetching user:', error);
+            return res.status(500).json({ success: false, message: 'Login failed' });
+        }
 
         if (results.length === 0) {
             return res.json({ success: false, message: 'User not found' });
@@ -171,12 +223,15 @@ app.post('/login', (req, res) => {
 
         const user = results[0];
         bcrypt.compare(password, user.password, (err, isMatch) => {
-            if (err) throw err;
+            if (err) {
+                console.error('Error comparing passwords:', err);
+                return res.status(500).json({ success: false, message: 'Login failed' });
+            }
 
             if (isMatch) {
                 req.session.loggedin = true;
                 req.session.username = username;
-                req.session.user_id = user.id; // store user ID in session
+                req.session.user_id = user.id;
                 res.json({ success: true, message: 'Login successful' });
             } else {
                 res.json({ success: false, message: 'Password incorrect' });
@@ -236,9 +291,11 @@ app.post('/gameadd', (req, res) => {
     const { name, year, platform, publisher, genre, na_sales, eu_sales, jp_sales, other_sales } = req.body;
 
     const sql = 'INSERT INTO games (name, year, platform, publisher_id, genre_id, na_sales, eu_sales, jp_sales, other_sales, global_sales) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    req.logQuery(sql, [name, year, platform, publisher, genre, na_sales, eu_sales, jp_sales, other_sales, (parseFloat(na_sales) + parseFloat(eu_sales) + parseFloat(jp_sales) + parseFloat(other_sales))]); // Logging the SQL query
     pool.query(sql, [name, year, platform, publisher, genre, na_sales, eu_sales, jp_sales, other_sales, (parseFloat(na_sales) + parseFloat(eu_sales) + parseFloat(jp_sales) + parseFloat(other_sales))], (error, results) => {
         if (error) {
-            return res.json({ success: false, message: 'Failed to add game', error });
+            console.error('Error adding game:', error);
+            return res.json({ success: false, message: 'Failed to add game' });
         }
         res.json({ success: true, message: 'Game added successfully' });
     });
@@ -248,11 +305,10 @@ app.post('/gameadd', (req, res) => {
 app.post("/edit_game", (request, response) => {
     const { gameId, name, year, platform_Name, publisher_id, genre_id } = request.body;
 
-    // Update games table with the platform name and other details
     const sql = `UPDATE games
                  SET name = ?, year = ?, platform = ?, publisher_id = ?, genre_id = ?
                  WHERE game_id = ?`;
-
+    request.logQuery(sql, [name, year, platform_Name, publisher_id, genre_id, gameId]); // Logging the SQL query
     pool.query(sql, [name, year, platform_Name, publisher_id, genre_id, gameId], (error, results) => {
         if (error) {
             console.error("Error updating game details:", error);
@@ -263,16 +319,17 @@ app.post("/edit_game", (request, response) => {
     });
 });
 
-
-
-
-
 // Route to get games based on search
 app.get("/get_games", (request, response) => {
     const sql = "SELECT games.*, genres.genre_name FROM games JOIN genres ON games.genre_id = genres.genre_id WHERE games.name LIKE '%" + request.query.search + "%'";
+    request.logQuery(sql); // Logging the SQL query
     pool.query(sql, (error, results) => {
-        if (error) console.log("Error: " + error);
-        response.send(results);
+        if (error) {
+            console.error("Error fetching games:", error);
+            response.status(500).json({ message: "Failed to fetch games" });
+        } else {
+            response.send(results);
+        }
     });
 });
 
@@ -298,14 +355,13 @@ app.get('/get_games_f', (req, res) => {
     if (filter === 'top10') {
         query += ' ORDER BY games.game_id LIMIT 10';
     }
-    
 
-    // Connect to the database and execute the query
+    req.logQuery(query); // Logging the SQL query
     pool.query(query, (error, results) => {
         if (error) {
-            console.log("Error: " + error);
+            console.error("Error fetching filtered games:", error);
+            res.status(500).json({ message: "Failed to fetch filtered games" });
         } else {
-            // If everything went well, send the results
             res.send(results);
         }
     });
@@ -318,10 +374,15 @@ app.get("/open_game", (request, response) => {
         WHERE g.publisher_id = p.publisher_id
         AND g.genre_id = g2.genre_id
         AND g.game_id = ?`;
-
+    
+    request.logQuery(sql, [request.query.id]); // Logging the SQL query
     pool.query(sql, [request.query.id], (error, results) => {
-        if (error) console.log("Error: " + error);
-        response.send(results);
+        if (error) {
+            console.error("Error fetching game details:", error);
+            response.status(500).json({ message: "Failed to fetch game details" });
+        } else {
+            response.send(results);
+        }
     });
 });
 
@@ -330,9 +391,14 @@ app.get("/get_reviews", (request, response) => {
     const gameId = request.query.gameid;
     const sql = "SELECT r.review_id, r.rating, r.comment, DATE_FORMAT(r.date, '%Y-%m-%d') as date, u.username, r.user_id FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.game_id = ?";
     
+    request.logQuery(sql, [gameId]); // Logging the SQL query
     pool.query(sql, [gameId], (error, results) => {
-        if (error) throw error;
-        response.send(results);
+        if (error) {
+            console.error('Error fetching reviews:', error);
+            response.status(500).json({ message: 'Failed to fetch reviews' });
+        } else {
+            response.send(results);
+        }
     });
 });
 
@@ -348,15 +414,16 @@ app.post("/add_review", (request, response) => {
     const date = singaporeTime.toISOString().split('T')[0]; // get current date in YYYY-MM-DD format
 
     const sql = "INSERT INTO reviews (user_id, game_id, rating, comment, date) VALUES (?, ?, ?, ?, ?)";
+    request.logQuery(sql, [user_id, game_id, rating, comment, date]); // Logging the SQL query
     pool.query(sql, [user_id, game_id, rating, comment, date], (error, results) => {
-        if (error) throw error;
-        response.json({ success: true, message: 'Review added successfully' });
+        if (error) {
+            console.error('Error adding review:', error);
+            response.status(500).json({ success: false, message: 'Failed to add review' });
+        } else {
+            response.json({ success: true, message: 'Review added successfully' });
+        }
     });
 });
-
-
-
-
 
 // POST route to remove a review
 app.post('/delete_review', async (req, res) => {
@@ -379,24 +446,21 @@ app.post('/delete_review', async (req, res) => {
     }
 });
 
-
-
+// POST route to delete a game
 app.post('/delete_game', async (req, res) => {
-    const gameId = req.body.gameId; 
+    const gameId = req.body.gameId;
 
     try {
-          
         const result = await pool.query('DELETE FROM games WHERE game_id = ?', [gameId]);
         res.status(200).json({ message: 'Game deleted successfully' });
-    
     } catch (error) {
-        console.error('Error deleting review:', error);
+        console.error('Error deleting game:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 });
-
 
 // Start the server
 app.listen(8080, () => {
     console.log('Server listening on port 8080');
 });
+
