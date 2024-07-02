@@ -488,11 +488,50 @@ app.post('/delete_game', async (req, res) => {
     }
 });
 
-
-
-
-
 // Start the server
 app.listen(8080, () => {
     console.log('Server listening on port 8080');
 });
+
+// --------------------------------------------------------
+
+// MongoDB connection
+const { MongoClient, ServerApiVersion } = require("mongodb");
+
+// Replace the placeholder with your Atlas connection string
+const uri = "mongodb+srv://gamepedia:gamepedia@clusterinf2003.1awimhh.mongodb.net/?retryWrites=true&w=majority&appName=ClusterINF2003";
+
+// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+const client = new MongoClient(uri,  {
+        serverApi: {
+            version: ServerApiVersion.v1,
+            strict: true,
+            deprecationErrors: true,
+        }
+    }
+);
+
+async function run() {
+  try {
+    // Connect the client to the server (optional starting in v4.7)
+    await client.connect();
+
+    // Connect to 'testdb' database
+    const database = await client.db("testdb");
+    console.log("Successfully connected to MongoDB");
+
+    // Try to retrieve the data in 'testdb' db and 'tests' collection
+    const collection = database.collection("tests");
+    const query = { name: "Jane Doe" };
+
+    // Execute query
+    const result = await collection.findOne(query);
+    console.log(result);
+
+  } finally {
+    // Ensures that the client will close when you finish/error
+    console.log("Closing the MongoDB connection");
+    await client.close();
+  }
+}
+run().catch(console.dir);

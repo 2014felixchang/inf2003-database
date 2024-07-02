@@ -9,10 +9,11 @@ Dependencies/Libraries needed:
 - body-parser
 - express-session
 - bcrypt
+- mongodb
 
 1) Open Terminal/Command Prompt
 2) Navigate to the folder containing the js and html file.
-3) You can do 'npm install' or do: 'npm install express mysql body-parser express-session bcrypt'
+3) You can do 'npm install' or do: 'npm install express mysql body-parser express-session bcrypt mongodb@6.7'
 This is to install the necessary libraries
 (P.S. You would need to install node.js as 'npm' is part of node.js)
 
