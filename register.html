@@ -113,21 +113,30 @@
 
             request.onreadystatechange = () => {
                 if (request.readyState === XMLHttpRequest.DONE) {
-                    const response = JSON.parse(request.responseText);
-                    if (request.status === 200) {
-                        if (response.success) {
-                            document.getElementById('successAlert').innerText = response.message;
-                            document.getElementById('successAlert').style.display = 'block';
-                            setTimeout(() => {
-                                window.location.href = '/login';
-                            }, 2000);
+                    try {
+                        const response = JSON.parse(request.responseText);
+                        if (request.status === 200) {
+                            if (response.success) {
+                                document.getElementById('successAlert').innerText = response.message;
+                                document.getElementById('successAlert').style.display = 'block';
+                                document.getElementById('errorAlert').style.display = 'none';
+                                setTimeout(() => {
+                                    window.location.href = '/login';
+                                }, 2000);
+                            } else {
+                                document.getElementById('errorAlert').innerText = response.message;
+                                document.getElementById('errorAlert').style.display = 'block';
+                                document.getElementById('successAlert').style.display = 'none';
+                            }
                         } else {
-                            document.getElementById('errorAlert').innerText = response.message;
+                            document.getElementById('errorAlert').innerText = response.message || 'An error occurred. Please try again.';
                             document.getElementById('errorAlert').style.display = 'block';
+                            document.getElementById('successAlert').style.display = 'none';
                         }
-                    } else {
-                        document.getElementById('errorAlert').innerText = 'An error occurred. Please try again.';
+                    } catch (e) {
+                        document.getElementById('errorAlert').innerText = 'Invalid response from server.';
                         document.getElementById('errorAlert').style.display = 'block';
+                        document.getElementById('successAlert').style.display = 'none';
                     }
                 }
             };

@@ -198,12 +198,16 @@ app.post('/register', (req, res) => {
         pool.query(sql, [username, hash], (error, results) => {
             if (error) {
                 console.error('Error inserting user:', error);
+                if (error.code === 'ER_DUP_ENTRY') {
+                    return res.status(400).json({ success: false, message: 'Username already exists. Please try to login instead.' });
+                }
                 return res.status(500).json({ success: false, message: 'Registration failed' });
             }
             res.json({ success: true, message: 'Registration successful' });
         });
     });
 });
+
 
 // Login Route
 app.post('/login', (req, res) => {
