@@ -297,6 +297,7 @@
             .then(response => {
                 if (response.ok) {
                     alert('Changes saved successfully!');
+                    window.location.href = '/gamedelete';
                 } else {
                     alert('Failed to save changes.');
                 }

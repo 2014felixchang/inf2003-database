@@ -193,6 +193,7 @@
             const res = JSON.parse(request.responseText);
             load_data(document.getElementById('search').value);
             alert(res.message);
+            window.location.href = '/gamedelete';
         } else {
             console.error('Error:', request.status); // Log the error status
             alert('Failed to delete review. Please try again.'); // Show a generic error message

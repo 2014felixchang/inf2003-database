@@ -4,6 +4,8 @@ const mysql = require('mysql');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
+const { connectToMongoDB, getDB } = require('./mongodb');
+const { ObjectId } = require('mongodb');
 
 const app = express();
 
@@ -37,7 +39,9 @@ pool.getConnection((error) => {
     console.log('MySQL Database is connected successfully');
 });
 
-// Middleware to log SQL queries
+// Connect to MongoDB and Check Connection
+connectToMongoDB();
+
 // Middleware to log SQL queries
 function logSqlQueries(req, res, next) {
     req.queryLogs = []; // Initialize an empty array to store query logs
@@ -62,12 +66,24 @@ function logSqlQueries(req, res, next) {
     next();
 }
 
-
 // Adding the middleware to log SQL queries
-app.use(logSqlQueries);
+// Apply the middleware only to the routes that need SQL logging
+app.use('/get_platforms', logSqlQueries);
+app.use('/get_publishers', logSqlQueries);
+app.use('/get_genres', logSqlQueries);
+app.use('/register', logSqlQueries);
+app.use('/login', logSqlQueries);
+app.use('/edit_game', logSqlQueries);
+app.use('/get_games', logSqlQueries);
+app.use('/get_games_f', logSqlQueries);
+app.use('/open_game', logSqlQueries);
 
-// Routes
+// Function to check if a string is a valid ObjectId
+function isValidObjectId(id) {
+    return ObjectId.isValid(id) && (String(new ObjectId(id)) === id);
+}
 
+//--Routes--//
 // Redirect to register page on first launch
 app.get("/", (request, response) => {
     if (request.session.loggedin) {
@@ -119,17 +135,11 @@ app.get("/game_info", (request, response) => {
     response.sendFile(__dirname + "/game_info.html");
 });
 
-
-
-
-// Endpoint to fetch SQL performance data
 // Endpoint to fetch SQL performance data
 app.get('/performance', (req, res) => {
     const performanceData = req.queryLogs;
     res.json(performanceData);
 });
-
-
 
 // Serve index page
 app.get("/index", (request, response) => {
@@ -198,12 +208,16 @@ app.post('/register', (req, res) => {
         pool.query(sql, [username, hash], (error, results) => {
             if (error) {
                 console.error('Error inserting user:', error);
+                if (error.code === 'ER_DUP_ENTRY') {
+                    return res.status(400).json({ success: false, message: 'Username already exists. Please try to login instead.' });
+                }
                 return res.status(500).json({ success: false, message: 'Registration failed' });
             }
             res.json({ success: true, message: 'Registration successful' });
         });
     });
 });
+
 
 // Login Route
 app.post('/login', (req, res) => {
@@ -417,34 +431,82 @@ app.get("/open_game", (request, response) => {
 });
 
 // Route to retrieve reviews for a game
-app.get("/get_reviews", (request, response) => {
+app.get("/get_reviews", async (request, response) => {
     const gameId = request.query.gameid;
     const sql = "SELECT r.review_id, r.rating, r.comment, DATE_FORMAT(r.date, '%Y-%m-%d') as date, u.username, r.user_id FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.game_id = ?";
     
-    request.logQuery(sql, [gameId]); // Logging the SQL query
-    pool.query(sql, [gameId], (error, results) => {
+    pool.query(sql, [gameId], async (error, results) => {
         if (error) {
             console.error('Error fetching reviews:', error);
-            response.status(500).json({ message: 'Failed to fetch reviews' });
-        } else {
-            response.send(results);
+            return response.status(500).json({ message: 'Failed to fetch reviews' });
+        }
+
+        try {
+            const db = getDB();
+            const imagesCollection = db.collection('review_images');
+            const reviewsWithImages = await Promise.all(results.map(async (review) => {
+                let imageBase64 = null;
+                try {
+                    const reviewIdStr = review.review_id.toString().padStart(24, '0'); // Ensure it's 24 characters long
+                    if (isValidObjectId(reviewIdStr)) {
+                        const image = await imagesCollection.findOne({ review_id: new ObjectId(reviewIdStr) });
+                        if (image) {
+                            imageBase64 = image.image_base64;
+                        }
+                    }
+                } catch (imageError) {
+                    console.error('Error fetching image for review:', review.review_id, imageError);
+                }
+                return {
+                    ...review,
+                    image_base64: imageBase64
+                };
+            }));
+            response.send(reviewsWithImages);
+        } catch (error) {
+            console.error('Error fetching review images:', error);
+            response.status(500).json({ message: 'Failed to fetch review images' });
         }
     });
 });
 
 // Route to submit a new review
 app.post("/add_review", (request, response) => {
-    const { game_id, rating, comment } = request.body;
+    const { game_id, rating, comment, image_base64 } = request.body;
     const user_id = request.session.user_id; // assuming user_id is stored in session after login
+
     // Convert current time to Singapore time
     const currentUTC = new Date();
     const singaporeOffset = 8 * 60; // Singapore is UTC+8
     const singaporeTime = new Date(currentUTC.getTime() + (singaporeOffset * 60 * 1000));
     const date = singaporeTime.toISOString().split('T')[0]; // get current date in YYYY-MM-DD format
     const sql = "INSERT INTO reviews (user_id, game_id, rating, comment, date) VALUES (?, ?, ?, ?, ?)";
-    pool.query(sql, [user_id, game_id, rating, comment, date], (error, results) => {
-        if (error) throw error;
-        response.json({ success: true, message: 'Review added successfully' });
+
+    pool.query(sql, [user_id, game_id, rating, comment, date], async (error, results) => {
+        if (error) {
+            console.error('Error adding review:', error);
+            return response.status(500).json({ message: 'Failed to add review' });
+        }
+
+        if (image_base64) {
+            const review_id = results.insertId.toString().padStart(24, '0'); // Ensure it's 24 characters long
+            const newImage = {
+                review_id: new ObjectId(review_id),
+                image_base64,
+            };
+
+            try {
+                const db = getDB();
+                const imagesCollection = db.collection('review_images');
+                await imagesCollection.insertOne(newImage);
+                response.json({ success: true, message: 'Review and image added successfully' });
+            } catch (error) {
+                console.error('Error adding image to review:', error);
+                response.status(500).json({ message: 'Review added but failed to add image' });
+            }
+        } else {
+            response.json({ success: true, message: 'Review added successfully' });
+        }
     });
 });
 
@@ -455,10 +517,18 @@ app.post('/delete_review', async (req, res) => {
     const reviewUsername = req.body.reviewUsername;
     const isAdmin = req.session.isAdmin; // Check if the user is an admin
 
+    const reviewIdStr = reviewId.toString().padStart(24, '0');
+    if (!isValidObjectId(reviewIdStr)) {
+        return res.status(400).json({ message: 'Invalid review ID format' });
+    }
+
     try {
         if (isAdmin || username === reviewUsername) {
-            const result = await pool.query('DELETE FROM reviews WHERE review_id = ?', [reviewId]);
-            res.status(200).json({ message: 'Review deleted successfully' });
+            await pool.query('DELETE FROM reviews WHERE review_id = ?', [reviewId]);
+            const db = getDB();
+            const imagesCollection = db.collection('review_images');
+            await imagesCollection.deleteOne({ review_id: new ObjectId(reviewIdStr) });
+            res.status(200).json({ message: 'Review and associated image deleted successfully' });
         } else {
             res.status(403).json({ message: 'You have no rights to delete this review' });
         }
@@ -487,10 +557,6 @@ app.post('/delete_game', async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 });
-
-
-
-
 
 // Start the server
 app.listen(8080, () => {
