@@ -79,6 +79,43 @@
         tr {
             border-style: hidden;
         }
+
+        .comment {
+            background-color: #e9ecef;
+            border-radius: 15px;
+            padding: 10px;
+            margin-bottom: 10px;
+            position: relative;
+            max-width: 75%;
+        }
+
+        .comment p {
+            margin: 0;
+        }
+
+        .comment::before {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 10px;
+            width: 0;
+            height: 0;
+            border: 10px solid transparent;
+            border-top-color: #e9ecef;
+            border-bottom: 0;
+            border-right: 0;
+            margin-left: -5px;
+            margin-bottom: -10px;
+        }
+
+        .comments-section {
+            margin-top: 20px;
+        }
+
+        .comment-username {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 
@@ -208,6 +245,25 @@
                                         <button class="btn btn-success" onclick="likeReview(${review.review_id})">👍 Like (${review.likes || 0})</button>
                                     </div>
                                 </blockquote>
+                                <!-- Comments Section -->
+                                <div class="comments-section mt-3">
+                                    <h5>Comments:</h5>
+                                    <div id="comments-${review.review_id}">
+                                        ${review.comments.length > 0 ? review.comments.map(comment => `
+                                            <div class="comment">
+                                                <p class="comment-username">${comment.username}:</p>
+                                                <p>${comment.text}</p>
+                                            </div>
+                                        `).join('') : '<p>No comments yet.</p>'}
+                                    </div>
+                                    <form onsubmit="submitComment(event, ${review.review_id})">
+                                        <div class="mb-3">
+                                            <label for="comment-${review.review_id}" class="form-label">Add a comment</label>
+                                            <input type="text" class="form-control" id="comment-${review.review_id}" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">Submit</button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                         `;
@@ -218,6 +274,46 @@
             };
 
             request.send();
+        }
+
+        function submitComment(event, reviewId) {
+            event.preventDefault();
+            const commentInput = document.getElementById(`comment-${reviewId}`);
+            const comment = commentInput.value;
+
+            fetch('/add_comment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ reviewId, comment })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Comment added successfully');
+
+                        // Create a new comment element
+                        const newComment = document.createElement('div');
+                        newComment.classList.add('comment');
+                        newComment.innerHTML = `
+                <p class="comment-username">${data.username}:</p>
+                <p>${comment}</p>
+            `;
+
+                        // Insert the new comment above the input box
+                        const commentsSection = document.getElementById(`comments-${reviewId}`);
+                        commentsSection.insertBefore(newComment, commentsSection.querySelector('form'));
+
+                        commentInput.value = ''; // Clear the input field
+                    } else {
+                        alert('Error adding comment: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while adding the comment.');
+                });
         }
 
         function confirmLogout() {

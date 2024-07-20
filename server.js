@@ -386,7 +386,7 @@ app.get('/get_games_f', (req, res) => {
     const search = req.query.search;
 
     let query = 'SELECT games.*, genres.genre_name FROM games JOIN genres ON games.genre_id = genres.genre_id WHERE 1=1';
-    
+
     if (platform !== 'ALL') {
         query += ` AND games.platform = '${platform}'`;
     }
@@ -418,7 +418,7 @@ app.get("/open_game", (request, response) => {
         WHERE g.publisher_id = p.publisher_id
         AND g.genre_id = g2.genre_id
         AND g.game_id = ?`;
-    
+
     request.logQuery(sql, [request.query.id]); // Logging the SQL query
     pool.query(sql, [request.query.id], (error, results) => {
         if (error) {
@@ -434,7 +434,7 @@ app.get("/open_game", (request, response) => {
 // app.get("/get_reviews", async (request, response) => {
 //     const gameId = request.query.gameid;
 //     const sql = "SELECT r.review_id, r.rating, r.comment, DATE_FORMAT(r.date, '%Y-%m-%d') as date, u.username, r.user_id FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.game_id = ?";
-    
+
 //     pool.query(sql, [gameId], async (error, results) => {
 //         if (error) {
 //             console.error('Error fetching reviews:', error);
@@ -485,10 +485,12 @@ app.get("/get_reviews", async (request, response) => {
             const db = getDB();
             const imagesCollection = db.collection('review_images');
             const reviewLikesCollection = db.collection('review_likes');
+            const repliesCollection = db.collection('replies');
 
-            const reviewsWithImagesAndLikes = await Promise.all(results.map(async (review) => {
+            const reviewsWithImagesLikesAndComments = await Promise.all(results.map(async (review) => {
                 let imageBase64 = null;
                 let likes = 0;
+                let comments = [];
                 try {
                     // Fetch image from MongoDB
                     const reviewIdStr = review.review_id.toString().padStart(24, '0'); // Ensure it's 24 characters long
@@ -504,22 +506,41 @@ app.get("/get_reviews", async (request, response) => {
                     if (likeDoc) {
                         likes = likeDoc.likes;
                     }
+
+                    // Fetch comments from MongoDB
+                    const rawComments = await repliesCollection.find({ reviewId: review.review_id }).project({ text: 1, userId: 1, _id: 0 }).toArray();
+
+                    // Fetch usernames for each comment from MySQL
+                    comments = await Promise.all(rawComments.map(async (comment) => {
+                        return new Promise((resolve, reject) => {
+                            const userSql = 'SELECT username FROM users WHERE id = ?';
+                            pool.query(userSql, [comment.userId], (err, userResult) => {
+                                if (err) {
+                                    console.error('Error fetching username:', err);
+                                    return reject(err);
+                                }
+                                resolve({
+                                    ...comment,
+                                    username: userResult[0].username
+                                });
+                            });
+                        });
+                    }));
                 } catch (error) {
                     console.error('Error fetching data for review:', review.review_id, error);
                 }
 
-                console.log(`Review ID: ${review.review_id}, Likes: ${likes}`);
-
                 return {
                     ...review,
                     image_base64: imageBase64,
-                    likes: likes
+                    likes: likes,
+                    comments: comments
                 };
             }));
-            response.send(reviewsWithImagesAndLikes);
+            response.send(reviewsWithImagesLikesAndComments);
         } catch (error) {
-            console.error('Error fetching review images and likes:', error);
-            response.status(500).json({ message: 'Failed to fetch review images and likes' });
+            console.error('Error fetching review images, likes, and comments:', error);
+            response.status(500).json({ message: 'Failed to fetch review images, likes, and comments' });
         }
     });
 });
@@ -583,7 +604,7 @@ app.post('/delete_review', async (req, res) => {
             const imagesCollection = db.collection('review_images');
             const reviewLikesCollection = db.collection('review_likes');
             const userLikesCollection = db.collection('user_likes');
-            
+
             await imagesCollection.deleteOne({ review_id: new ObjectId(reviewIdStr) });
             await reviewLikesCollection.deleteOne({ reviewId: reviewId });
             await userLikesCollection.deleteMany({ reviewId: reviewId });
@@ -654,6 +675,94 @@ app.post('/like_review', async (req, res) => {
         console.error('Error liking review:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
+});
+
+// Route to add a comment to a review
+app.post('/add_comment', async (req, res) => {
+    const { reviewId, comment } = req.body;
+    const userId = req.session.user_id; // assuming user_id is stored in session after login
+
+    if (!userId) {
+        return res.status(400).json({ success: false, message: 'User is not logged in' });
+    }
+
+    try {
+        const db = getDB();
+        const repliesCollection = db.collection('replies');
+
+        const newComment = {
+            reviewId: parseInt(reviewId, 10), // Ensure reviewId is an integer
+            userId: userId,
+            text: comment,
+            date: new Date()
+        };
+
+        await repliesCollection.insertOne(newComment);
+
+        res.status(200).json({ success: true, message: 'Comment added successfully', username: req.session.username });
+    } catch (error) {
+        console.error('Error adding comment:', error);
+        res.status(500).json({ message: 'Failed to add comment' });
+    }
+});
+
+
+// Update the get_reviews route to include comments
+app.get("/get_reviews", async (request, response) => {
+    const gameId = request.query.gameid;
+    const sql = "SELECT r.review_id, r.rating, r.comment, DATE_FORMAT(r.date, '%Y-%m-%d') as date, u.username, r.user_id FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.game_id = ?";
+
+    pool.query(sql, [gameId], async (error, results) => {
+        if (error) {
+            console.error('Error fetching reviews:', error);
+            return response.status(500).json({ message: 'Failed to fetch reviews' });
+        }
+
+        try {
+            const db = getDB();
+            const imagesCollection = db.collection('review_images');
+            const reviewLikesCollection = db.collection('review_likes');
+            const repliesCollection = db.collection('replies');
+
+            const reviewsWithImagesAndLikes = await Promise.all(results.map(async (review) => {
+                let imageBase64 = null;
+                let likes = 0;
+                let comments = [];
+                try {
+                    // Fetch image from MongoDB
+                    const reviewIdStr = review.review_id.toString().padStart(24, '0'); // Ensure it's 24 characters long
+                    if (isValidObjectId(reviewIdStr)) {
+                        const image = await imagesCollection.findOne({ review_id: new ObjectId(reviewIdStr) });
+                        if (image) {
+                            imageBase64 = image.image_base64;
+                        }
+                    }
+
+                    // Fetch like count from MongoDB
+                    const likeDoc = await reviewLikesCollection.findOne({ reviewId: review.review_id });
+                    if (likeDoc) {
+                        likes = likeDoc.likes;
+                    }
+
+                    // Fetch comments from MongoDB
+                    comments = await repliesCollection.find({ reviewId: new ObjectId(reviewIdStr) }).toArray();
+                } catch (error) {
+                    console.error('Error fetching data for review:', review.review_id, error);
+                }
+
+                return {
+                    ...review,
+                    image_base64: imageBase64,
+                    likes: likes,
+                    comments: comments
+                };
+            }));
+            response.send(reviewsWithImagesAndLikes);
+        } catch (error) {
+            console.error('Error fetching review images, likes, and comments:', error);
+            response.status(500).json({ message: 'Failed to fetch review images, likes, and comments' });
+        }
+    });
 });
 
 // Start the server
