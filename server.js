@@ -935,6 +935,66 @@ app.get('/check_bookmark', async (req, res) => {
     }
 });
 
+app.post('/save_filter', async (req, res) => {
+    try {
+        const { genre, platform } = req.body;
+
+        if (!genre || !platform) {
+            return res.status(400).json({ message: 'Genre and platform are required.' });
+        }
+
+        const db = getDB();
+        const filtersCollection = db.collection('filters');
+
+        // Increment the count for the filter
+        await filtersCollection.updateOne(
+            { genre, platform },
+            { $inc: { count: 1 } },
+            { upsert: true } // Create a new document if it doesn't exist
+        );
+
+        res.status(200).json({ message: 'Filter saved successfully.' });
+    } catch (error) {
+        console.error('Error saving filter:', error);
+        res.status(500).json({ message: 'Error saving filter.' });
+    }
+});
+
+
+app.get('/get_popular_filters', async (req, res) => {
+    try {
+        const db = getDB();
+        const filtersCollection = db.collection('filters');
+        
+
+        // Retrieve the most popular platform
+        const popularPlatform = await filtersCollection
+            .find({ platform: { $ne: null } }) // Ensure platform is not null
+            .sort({ count: -1 })
+            .limit(1)
+            .toArray();
+                // Retrieve the most popular genre
+                const popularGenre = await filtersCollection
+                .find({ genre: { $ne: null } }) // Ensure genre is not null
+                .sort({ count: -1 })
+                .limit(1)
+                .toArray();
+
+
+
+        // Prepare the response with the most popular genre and platform
+        res.status(200).json({
+            genre: popularGenre.length ? popularGenre[0].genre : null,
+            platform: popularPlatform.length ? popularPlatform[0].platform : null
+        });
+    } catch (error) {
+        console.error('Error fetching popular filters:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+
+
 // Start the server
 app.listen(8080, () => {
     console.log('Server listening on port 8080');
