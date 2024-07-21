@@ -150,6 +150,14 @@ app.get("/index", (request, response) => {
     }
 });
 
+//Serve bookmark page
+app.get('/bookmarks', (req, res) => {
+    if (!req.session.username) {
+        return res.redirect('/login'); // Redirect to login page if not authenticated
+    }
+    res.sendFile(__dirname + '/bookmarks.html');
+});
+
 // Route to get platforms
 app.get("/get_platforms", (req, res) => {
     const sql = "SELECT DISTINCT platform FROM games";
@@ -763,6 +771,168 @@ app.get("/get_reviews", async (request, response) => {
             response.status(500).json({ message: 'Failed to fetch review images, likes, and comments' });
         }
     });
+});
+
+app.post('/save_bookmark', async (req, res) => {
+    const db = getDB();
+    try {
+        const { gameid } = req.body; // Ensure this matches the request payload
+        const username = req.session.username;
+        const user_id = req.session.user_id;
+
+        console.log('Received data:', { gameId: gameid, user_id }); // Add this line to debug
+
+        if (!username) {
+            return res.status(401).json({ success: false, message: 'Unauthorized' });
+        }
+
+        let bookmarkId;
+        if (ObjectId.isValid(gameid)) {
+            bookmarkId = new ObjectId(gameid);
+        } else {
+            bookmarkId = gameid; // Use the gameid as is if it's not a valid ObjectId
+        }
+
+        const bookmarksCollection = db.collection('bookmark');
+        const result = await bookmarksCollection.updateOne(
+            { user_id: user_id },
+            { $addToSet: { bookmarks: bookmarkId } }, // Use the appropriate bookmarkId
+            { upsert: true }
+        );
+
+        res.json({ success: true, message: 'Game bookmarked successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+});
+
+/*app.get('/get_bookmarks', async (req, res) => {
+    const db = getDB();
+    try {
+        const username = req.session.username;
+
+        if (!username) {
+            return res.status(401).json({ success: false, message: 'Unauthorized' });
+        }
+
+        const bookmarksCollection = db.collection('bookmark');
+        const userBookmarks = await bookmarksCollection.findOne({ username: username });
+
+        if (!userBookmarks) {
+            return res.json({ success: true, bookmarks: [] });
+        }
+
+        res.json({ success: true, bookmarks: userBookmarks.bookmarks });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+}); */
+
+app.get('/get_bookmarks', async (req, res) => {
+    const db = getDB();
+    try {
+        //const username = req.session.username;
+        const user_id = req.session.user_id;
+
+        if (!user_id) {
+            return res.status(401).json({ success: false, message: 'Unauthorized' });
+        }
+
+        const bookmarksCollection = db.collection('bookmark');
+        const userBookmarks = await bookmarksCollection.findOne({ user_id: user_id });
+
+        if (!userBookmarks) {
+            return res.json({ success: true, bookmarks: [] });
+        }
+
+        // Convert bookmarks to an array of game_ids
+        const gameIds = userBookmarks.bookmarks;
+
+        // Query MySQL to get game names
+        const sql = 'SELECT game_id, name FROM games WHERE game_id IN (?)';
+        pool.query(sql, [gameIds], (error, results) => {
+            if (error) {
+                console.error('Error fetching game names:', error);
+                return res.status(500).json({ success: false, message: 'Internal Server Error' });
+            }
+
+            // Map game_id to game_name
+            const bookmarksWithNames = results.map(game => ({
+                game_id: game.game_id,
+                name: game.name
+            }));
+
+            res.json({ success: true, bookmarks: bookmarksWithNames });
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+});
+
+// Endpoint to remove a bookmark
+app.post('/remove_bookmark', async (req, res) => {
+    const db = getDB();
+    try {
+        const { gameid } = req.body;
+        //const username = req.session.username;
+        const user_id = req.session.user_id;
+
+        if (!user_id) {
+            return res.status(401).json({ success: false, message: 'Unauthorized' });
+        }
+
+        let bookmarkId;
+        if (ObjectId.isValid(gameid)) {
+            bookmarkId = new ObjectId(gameid);
+        } else {
+            bookmarkId = gameid; // Use the gameid as is if it's not a valid ObjectId
+        }
+
+        const bookmarksCollection = db.collection('bookmark');
+        const result = await bookmarksCollection.updateOne(
+            { user_id: user_id },
+            { $pull: { bookmarks: bookmarkId } } // Remove the bookmark
+        );
+
+        res.json({ success: true, message: 'Game removed from bookmarks successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+});
+
+app.get('/check_bookmark', async (req, res) => {
+    const db = getDB();
+    try {
+        const { gameid } = req.query;
+        //const username = req.session.username;
+        const user_id = req.session.user_id;
+
+        if (!user_id) {
+            return res.status(401).json({ success: false, message: 'Unauthorized' });
+        }
+
+        let bookmarkId;
+        if (ObjectId.isValid(gameid)) {
+            bookmarkId = new ObjectId(gameid);
+        } else {
+            bookmarkId = gameid; // Use the gameid as is if it's not a valid ObjectId
+        }
+
+        const bookmarksCollection = db.collection('bookmark');
+        const userBookmarks = await bookmarksCollection.findOne(
+            { user_id: user_id, bookmarks: bookmarkId },
+            { projection: { _id: 0 } }
+        );
+
+        res.json({ isBookmarked: !!userBookmarks });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
 });
 
 // Start the server
