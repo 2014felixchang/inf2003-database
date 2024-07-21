@@ -64,6 +64,12 @@
             padding: 10px 20px;
         }
 
+        .btn-wrapper {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
         .btn-primary:hover,
         .btn-danger:hover {
             opacity: 0.8;
@@ -97,7 +103,9 @@
             <a class="navbar-brand" href="#" id="gamepediaLink">
                 <img src="/logo.jpg" alt="Gamepedia Logo">
             </a>
+            <button class="btn btn-primary" onclick="viewFavourites()">View Favourite</button>
             <button class="btn btn-danger" onclick="confirmLogout()">Logout</button>
+          
         </div>
     </nav>
 
@@ -269,6 +277,10 @@
                 const data = JSON.stringify({});
                 request.send(data);
             }
+        }
+
+        function viewFavourites() {
+            window.location.href = '/bookmarks'; 
         }
     </script>
 </body>
