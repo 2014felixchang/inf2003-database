@@ -131,8 +131,12 @@
 
     <div class="container-fluid">
         <button class="btn btn-secondary mb-3" onclick="history.back()">Back</button>
+
         <div class="card">
-            <div class="card-header">Game Details</div>
+            <div class="card-header d-flex justify-content-between">
+                <span>Game Details</span>
+                <button class="btn btn-success" id="bookmarkButton">Add Favourite</button>
+            </div>
             <div class="card-body" id="results">
                 <!-- Game details will be populated here -->
             </div>
@@ -439,8 +443,94 @@
                 });
         }
 
-        open_game(gameId);
-        load_reviews(gameId);
+        function saveBookmark() {
+            const request = new XMLHttpRequest();
+            request.open('POST', '/save_bookmark', true);
+            request.setRequestHeader('Content-Type', 'application/json');
+
+            request.onreadystatechange = () => {
+                if (request.readyState === XMLHttpRequest.DONE) {
+                    if (request.status === 200) {
+                        const response = JSON.parse(request.responseText);
+                        alert(response.message);
+                        isBookmarked = true;
+                        updateBookmarkButton();
+                    } else {
+                        alert('Failed to save bookmark. Please try again.');
+                    }
+                }
+            };
+
+            const data = JSON.stringify({ gameid: gameId });
+            request.send(data);
+        }
+
+        function removeBookmark() {
+            const request = new XMLHttpRequest();
+            request.open('POST', '/remove_bookmark', true);
+            request.setRequestHeader('Content-Type', 'application/json');
+
+            request.onreadystatechange = () => {
+                if (request.readyState === XMLHttpRequest.DONE) {
+                    if (request.status === 200) {
+                        const response = JSON.parse(request.responseText);
+                        alert(response.message);
+                        isBookmarked = false;
+                        updateBookmarkButton();
+                    } else {
+                        alert('Failed to remove bookmark. Please try again.');
+                    }
+                }
+            };
+
+            const data = JSON.stringify({ gameid: gameId });
+            request.send(data);
+        }
+
+        function updateBookmarkButton() {
+            const button = document.getElementById('bookmarkButton');
+            if (isBookmarked) {
+                button.textContent = 'Remove Favourite';
+                button.classList.remove('btn-success');
+                button.classList.add('btn-danger');
+                button.onclick = removeBookmark;
+            } else {
+                button.textContent = 'Save Favourite';
+                button.classList.remove('btn-danger');
+                button.classList.add('btn-success');
+                button.onclick = saveBookmark;
+            }
+        }
+
+        function checkBookmarkStatus() {
+            const request = new XMLHttpRequest();
+            request.open('GET', `/check_bookmark?gameid=${gameId}`, true);
+
+            request.onreadystatechange = () => {
+                if (request.readyState === XMLHttpRequest.DONE && request.status === 200) {
+                    const response = JSON.parse(request.responseText);
+                    isBookmarked = response.isBookmarked;
+                    updateBookmarkButton();
+                }
+            };
+
+            request.send();
+        }
+
+        window.onload = () => {
+            open_game(gameId);
+            load_reviews(gameId);
+            checkBookmarkStatus(); // Check the current bookmark status
+        };
+
+
+
+
+
+
+
+       // open_game(gameId);
+        //load_reviews(gameId);
     </script>
 </body>
 
