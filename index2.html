@@ -195,7 +195,6 @@
                 });
 
             // Fetch genres from the server and populate the genre dropdown
-            // Fetch genres from the server and populate the genre dropdown
             fetch("/get_genres")
                 .then(response => response.json())
                 .then(data => {
@@ -205,11 +204,12 @@
                         option.textContent = genre.genre_name;
                         genreDropdown.appendChild(option);
                     });
-    })
-    .catch(error => {
-        console.error('Error fetching genres:', error);
-    });
+                })
+                .catch(error => {
+                    console.error('Error fetching genres:', error);
+                });
 
+            displayPopularFilters(); // Fetch and display popular filters when the page loads
         });
 
         const ranking = document.getElementById('ranking'); 
@@ -219,9 +219,9 @@
         const search = document.getElementById('search');
         const searchForm = document.getElementById('searchForm');
 
-        function load_values(ranking_value, platform_value, genre_value, search_value){
+        function load_values(ranking_value, platform_value, genre_value, search_value) {
             const request = new XMLHttpRequest();
-            request.open('GET', '/get_games_f?filter=' + ranking_value +'&platform=' + platform_value + '&genre=' + genre_value + '&search=' + search_value, true);
+            request.open('GET', `/get_games_f?filter=${ranking_value}&platform=${platform_value}&genre=${genre_value}&search=${search_value}`, true);
             request.onreadystatechange = () => {
                 if (request.readyState === XMLHttpRequest.DONE && request.status === 200) {
                     const results = JSON.parse(request.responseText);
@@ -229,7 +229,7 @@
                     results.forEach(result => {
                         html += `
                         <tr>
-                            <td><a href="/game_info?gameid=${result.game_id}" >${result.name}</a></td>
+                            <td><a href="/game_info?gameid=${result.game_id}">${result.name}</a></td>
                             <td>${result.year}</td>
                             <td>${result.platform}</td>
                             <td>${result.genre_name}</td>
@@ -242,20 +242,55 @@
             request.send();
         }
 
-        function handleDropdownChange(){
-            load_values(ranking.value, platform.value, genre.value, search.value);
+        function displayPopularFilters() {
+            fetch("/get_popular_filters")
+                .then(response => response.json())
+                .then(data => {
+                    const popularGenre = data.genre || 'ALL';
+                    const popularPlatform = data.platform || 'ALL';
+
+                    genre.value = popularGenre;
+                    platform.value = popularPlatform;
+
+                    // Load values with popular filters
+                    load_values(ranking.value, popularPlatform, popularGenre, search.value);
+                })
+                .catch(error => console.error("Error fetching popular filters:", error));
+        }
+
+        function handleDropdownChange() {
+            const genreValue = genre.value;
+            const platformValue = platform.value;
+
+            // Save the selected filters to MongoDB
+            fetch('/save_filter', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ genre: genreValue, platform: platformValue })
+            })
+            .then(response => response.json())
+            .then(data => console.log('Filter saved:', data))
+            .catch(error => {
+                console.error('Error saving filters:', error);
+                alert('Failed to save filters.');
+            });
+
+            load_values(ranking.value, platformValue, genreValue, search.value);
         }
 
         ranking.addEventListener('change', handleDropdownChange);
         platform.addEventListener('change', handleDropdownChange);
         genre.addEventListener('change', handleDropdownChange);
-        searchForm.addEventListener('submit', handleDropdownChange);   
+        searchForm.addEventListener('submit', (event) => {
+            event.preventDefault(); // Prevent the default form submission
+            handleDropdownChange(); // Handle dropdown changes and search
+        });
 
         const clearButton = document.getElementById('clearButton');
 
         clearButton.addEventListener('click', function(event) {
             event.preventDefault(); // Prevent the link from navigating
-            location.reload();
+            location.reload(); // Reload the page to clear filters and results
         });
 
         function confirmLogout() {
