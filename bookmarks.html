@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gamepedia - Bookmarks</title>
+    <link href="https://getbootstrap.com/docs/5.1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <style>
+        /* Basic Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Body Styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* Header Styling */
+        h1 {
+            color: #007BFF;
+            margin-bottom: 20px;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        /* Spinner Styling */
+        #spinner {
+            font-size: 1.5em;
+            color: #007BFF;
+            margin-bottom: 20px;
+        }
+
+        /* List Styling */
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            background-color: #fff;
+            margin: 10px auto;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Link Styling */
+        a {
+            text-decoration: none;
+            color: #007BFF;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* No Bookmarks Message Styling */
+        .no-bookmarks {
+            font-size: 1.2em;
+            color: #555;
+            margin: 20px auto;
+            padding: 20px;
+            border-radius: 4px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+        }
+
+        .no-bookmarks p {
+            margin: 0;
+        }
+
+        .no-bookmarks a {
+            color: #007BFF;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .no-bookmarks a:hover {
+            text-decoration: underline;
+        }
+
+        /* Footer Styling */
+        footer {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        /* Navbar Styling */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-brand {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ff4500;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+        }
+
+        .navbar-brand:hover {
+            color: #e33e00;
+        }
+
+        .navbar-brand img {
+            height: 130px;
+            width: auto;
+        }
+
+        .container-fluid {
+            max-width: 800px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Back Button Styling */
+        .back-button {
+            font-size: 1rem;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .back-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#" id="gamepediaLink">
+                <img src="/logo.jpg" alt="Gamepedia Logo">
+            </a>
+            <div class="btn-group">
+                <button class="back-button" onclick="window.history.back()">Back</button>
+                <button class="btn btn-danger" onclick="confirmLogout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <header>
+        <h1>Your Bookmarks</h1>
+    </header>
+
+    <div id="spinner" style="display: none;">Loading...</div>
+
+    <main>
+        <ul id="bookmark-list"></ul>
+        <div id="no-bookmarks" class="no-bookmarks" style="display: none;">
+            <p>No bookmarks found.</p>
+            <p><a href="/explore">Explore games</a> to add to your bookmarks.</p>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Gamepedia. All rights reserved.</p>
+    </footer>
+
+    <script>
+        async function fetchBookmarks() {
+            const spinner = document.getElementById('spinner');
+            const noBookmarksDiv = document.getElementById('no-bookmarks');
+            spinner.style.display = 'block'; // Show spinner
+            noBookmarksDiv.style.display = 'none'; // Hide no bookmarks message
+
+            try {
+                const response = await fetch('/get_bookmarks');
+                const data = await response.json();
+
+                if (data.success) {
+                    const bookmarkList = document.getElementById('bookmark-list');
+                    bookmarkList.innerHTML = '';
+
+                    if (data.bookmarks.length === 0) {
+                        noBookmarksDiv.style.display = 'block'; // Show no bookmarks message
+                    } else {
+                        data.bookmarks.forEach(bookmark => {
+                            const listItem = document.createElement('li');
+                            const link = document.createElement('a');
+                            link.href = `/game_info?gameid=${bookmark.game_id}`;
+                            link.textContent = bookmark.name; // Display the game name
+                            listItem.appendChild(link);
+                            bookmarkList.appendChild(listItem);
+                        });
+                    }
+                } else {
+                    alert('You have no bookmarks');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Error fetching bookmarks');
+            } finally {
+                spinner.style.display = 'none'; // Hide spinner
+            }
+        }
+
+        function confirmLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                const request = new XMLHttpRequest();
+                request.open('POST', '/logout', true);
+                request.setRequestHeader('Content-Type', 'application/json');
+
+                request.onreadystatechange = () => {
+                    if (request.readyState === XMLHttpRequest.DONE && request.status === 200) {
+                        const response = JSON.parse(request.responseText);
+                        alert(response.message);
+                        if (response.success) {
+                            window.location.href = '/';
+                        }
+                    }
+                };
+
+                const data = JSON.stringify({});
+                request.send(data);
+            }
+        }
+
+        // Fetch bookmarks when the page loads
+        window.onload = fetchBookmarks;
+    </script>
+</body>
+
+</html>
