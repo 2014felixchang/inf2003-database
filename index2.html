@@ -38,6 +38,7 @@
             font-weight: bold;
             color: #ff4500;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+            margin-right: 0px;
         }
 
         .navbar-brand:hover {
@@ -65,10 +66,10 @@
         }
 
         .btn-wrapper {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-}
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
 
         .btn-primary:hover,
         .btn-danger:hover {
@@ -105,18 +106,18 @@
             </a>
             <button class="btn btn-primary" onclick="viewFavourites()">View Favourite</button>
             <button class="btn btn-danger" onclick="confirmLogout()">Logout</button>
-          
         </div>
     </nav>
 
     <div class="container-fluid">
         <!-- <h1 class="text-danger text-center"><b>Gamepedia</b></h1> -->
-        <form id="searchForm" class="text-center"
-            onsubmit="event.preventDefault(); //load_data(document.getElementById('search').value);">
-            <div class="mb-3">
+        <form id="searchForm" class="row row-cols-lg-auto g-3 text-center align-items-center" onsubmit="event.preventDefault(); //load_data(document.getElementById('search').value);">
+            <div class="col-12">
                 <input type="text" class="form-control" id="search" placeholder="Enter a game" required>
             </div>
-            <button type="submit" class="btn btn-primary">Search</button>
+            <div class="col-12">
+                <button type="submit" class="btn btn-secondary">Search</button>
+            </div>
         </form>
         <div class="mt-3 mb-3">
             <div class="card">
